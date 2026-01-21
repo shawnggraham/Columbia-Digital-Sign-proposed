@@ -1,31 +1,52 @@
+import java.util.Random;
+
 public class CircularList {
 
-    // main() runnable for testing
-
-    public static void CircularList(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
 
         // Creating a new circular list object.
         CircularList list = new CircularList();
 
-        // Looping through the list to add 20 items.
-        for (int i = 1; i < 21; i++) {
-            list.insert(i);
-        }
+        Random random = new Random();
+
+        Queue queue = new Queue(random.nextInt(100));
+
+        do {
+            queue = new Queue(random.nextInt(4));
+            list.insert(queue);
+
+        } while (list.size() < 20);
 
         // Printing the size of the list.
         System.out.println("List size: " + list.size());
 
         // Looping through the list to print the items.
+
+        I = 1;
+        Queue student = list.next();
+
         do {
-            Thread.sleep(250);
-            System.out.println("Slide #" + S + ": " + list.next());
-            S++;
-            if (S == 21) {
-                S = 1;
-                I++;
-                System.out.println("Iteration #" + I);
-            }
-        } while (list.current.data != 21);
+            System.out.println("Day #" + I);
+            do {
+                Thread.sleep(100);
+                student.secondsWatched = random.nextInt(20);
+                student.slidesWatched++;
+                System.out.println("Slide #" + S + " watched by Student ID: " + student.name + student);
+                S++;
+
+                if (S == 21) {
+                    S = 1;
+                    I++;
+                    if (I == 5) {
+                        student.slidesWatched = 0;
+                        I = 1;
+                        break;
+                    }
+                    System.out.println("Day #" + I);
+                }
+            } while (I <= 4);
+            student = list.next();
+        }while (I < 20);
     }
 
     // slide counter
@@ -41,17 +62,17 @@ public class CircularList {
     // Node class
     private static class Node {
         // Data and next node
-        int data;
+        Queue data;
         Node next;
 
         // Node constructor
-        public Node(int data) {
+        public Node(Queue data) {
             this.data = data;
         }
     }
 
     // Method to add a new node
-    public void insert(int data) {
+    public void insert(Queue data) {
         Node newNode = new Node(data);
 
         if (tail == null) {
@@ -70,11 +91,11 @@ public class CircularList {
     }
 
     // Method to move the current node forward
-    public int next() {
+    public Queue next() {
         // Checking if the list is empty, throws an IllegalStateException if it is
         if (current == null) throw new IllegalStateException("List is empty");
         // Moving the current node forward
-        int data = current.data;
+        Queue data = current.data;
         current = current.next;
         return data;
     }
