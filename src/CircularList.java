@@ -26,19 +26,24 @@ public class CircularList {
         Queue student = list.next();
 
         do {
+            System.out.println(student);
             System.out.println("Day #" + I);
             do {
                 Thread.sleep(100);
                 student.secondsWatched = random.nextInt(20);
-                student.slidesWatched++;
-                System.out.println("Slide #" + S + " watched by Student ID: " + student.name + student);
+                System.out.println("Slide #" + S + " watched by " + student);
                 S++;
+
+                if (student.secondsWatched > 0) {
+                    student.slideWatched = true;
+                    student.SLIDES_WATCHED_TOTAL++;
+                }
 
                 if (S == 21) {
                     S = 1;
                     I++;
                     if (I == 5) {
-                        student.slidesWatched = 0;
+                        student.slideWatched = false;
                         I = 1;
                         break;
                     }
