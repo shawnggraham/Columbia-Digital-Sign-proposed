@@ -10,8 +10,6 @@ public class Generator {
     Gson gson = new Gson();
 
     Generator (String filename) {
-        //Instructions
-        System.out.println("Type enter to continue or type 'default' to get default file");
         //run Data class to get the data needed
         Data data = new Data();
 
