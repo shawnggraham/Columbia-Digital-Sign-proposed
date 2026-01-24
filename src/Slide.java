@@ -13,6 +13,6 @@ public class Slide {
      }
 
      public String toString() {
-         return "Slide #" + this.name + " Duration: " + this.duration + "s";
+         return "Slide #" + this.name + " [Duration: " + this.duration + "s]";
      }
 }

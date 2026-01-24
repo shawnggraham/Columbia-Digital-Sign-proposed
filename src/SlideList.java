@@ -1,51 +1,45 @@
 import java.util.Random;
 
-public class CircularList2 {
+public class SlideList {
 
-    public static void main(String[] args) throws InterruptedException {
+    // list size
+    private int size = 0;
+    // tail and current node
+    private Node tail = null;
+    private Node current = null;
+    public static int slideDuration;
+    public static int slideDurationTotal = 0;
 
+    public static SlideList generateSlideList() throws InterruptedException {
+
+        SlideList list = new SlideList();
         Random random = new Random();
-
-        // Creating a new circular list object.
-        CircularList2 list = new CircularList2();
-        CircularList2 studentList = new CircularList2();
-
 
         // Creating slides, adding 20 to the circular list.
         Slide slide;
         // Storing slide names and durations
         int slideName = 1;
-        int slideDuration;
-        int slideDurationTotal = 0;
 
         System.out.println("Generating lists of slides");
         Thread.sleep(1000);
-        while (list.size() < 20){
+        while (list.size() < 20) {
             System.out.println("\nAdding slide " + slideName);
-            slideDuration = random.nextInt(10,20);
+            slideDuration = random.nextInt(10, 20);
             slide = new Slide(slideName, slideDuration);
             slideName++;
             list.insert(slide);
             System.out.println(slide);
             slideDurationTotal += slideDuration;
         }
-        System.out.println("\nTotal list duration: "+slideDurationTotal);
-        System.out.println("\nList size: " + list.size());
+        System.out.println("\nTotal list duration: " + slideDurationTotal);
+        System.out.println("Total Slides: " + list.size() + "\n");
 
-        for (int i = 0; i < 40; i++) {
-            System.out.println(list.next());
-        }
+        return list;
     }
 
-    // slide counter
-    public static int S = 1;
-    // iteration counter
-    public static int I = 1;
-    // list size
-    private int size = 0;
-    // tail and current node
-    private Node tail = null;
-    private Node current = null;
+    public int getSlideListDuration(){
+        return slideDurationTotal;
+    }
 
     // Node class
     private static class Node {
@@ -78,6 +72,7 @@ public class CircularList2 {
         size++;
     }
 
+
     // Method to move the current node forward
     public Slide next() {
         // Checking if the list is empty, throws an IllegalStateException if it is
@@ -93,7 +88,7 @@ public class CircularList2 {
         return size;
     }
 
-    public String toString(){
+    public String toString() {
         return "List size: " + size + "List contents: " + tail.data;
     }
 }
