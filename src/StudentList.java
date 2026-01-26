@@ -1,3 +1,13 @@
+/**
+ * StudentList class
+ *
+ * generateStudentList() method generates a circular list of students
+ * .insert() method adds a new node to the list
+ * .next() method moves the cursor forward
+ * .size() method returns the size of the list
+ * .currentStudent() method returns the current student data
+ */
+
 import java.util.Random;
 
 public class StudentList {
@@ -8,22 +18,21 @@ public class StudentList {
     private Node tail = null;
     private Node current = null;
 
-    public static StudentList generateStudentList() throws InterruptedException {
+    public static StudentList generateStudentList(int size) throws InterruptedException {
         StudentList list = new StudentList();
         Random random = new Random();
         // Creating a new student list object.
         // Creating students, adding 20 to the circular list.
         // Storing slide names and durations
         int studentID = 1;
-        int watchDuration = random.nextInt(20);
         boolean slideWatched = false;
 
         System.out.println("Generating lists of students");
         Thread.sleep(1000);
 
-        while (list.size() < 5){
+        while (list.size() < size){
             System.out.println("\nAdding student ID: " + studentID);
-            Student student = new Student(studentID, watchDuration,slideWatched);
+            Student student = new Student(studentID, 0, slideWatched);
             studentID++;
             list.insert(student);
             System.out.println(student);
@@ -71,6 +80,10 @@ public class StudentList {
         Student data = current.data;
         current = current.next;
         return data;
+    }
+
+    public Student currentStudent(){
+        return current.data;
     }
 
     // Method to return the size of the list

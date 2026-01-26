@@ -1,3 +1,15 @@
+/**
+ * SlideList class
+ *
+ * generateSlideList() method generates a circular list of slides
+ * .insert() method adds a new node to the list
+ * .next() method moves the cursor forward
+ * .currentSlide() method returns the current slide data
+ * .size() method returns the size of the list
+ * .cycleDuration() method returns the duration of the list
+ * .copy() method returns a deep copy of the list
+ */
+
 import java.util.Random;
 
 public class SlideList {
@@ -10,7 +22,7 @@ public class SlideList {
     public static int slideDuration;
     public static int slideDurationTotal = 0;
 
-    public static SlideList generateSlideList() throws InterruptedException {
+    public static SlideList generateSlideList(int size) throws InterruptedException {
 
         SlideList list = new SlideList();
         Random random = new Random();
@@ -22,7 +34,7 @@ public class SlideList {
 
         System.out.println("Generating lists of slides");
         Thread.sleep(1000);
-        while (list.size() < 20) {
+        while (list.size() < size) {
             System.out.println("\nAdding slide " + slideName);
             slideDuration = random.nextInt(10, 20);
             slide = new Slide(slideName, slideDuration);
@@ -83,9 +95,43 @@ public class SlideList {
         return data;
     }
 
+    public Slide currentSlide(){
+        return current.data;
+    }
+
     // Method to return the size of the list
     public int size() {
         return size;
+    }
+
+    private Node headNode(){
+        return (tail == null) ? null : tail.next;
+    }
+
+    // Compute cycle duration by walking the linked list once (no arrays)
+    public int cycleDuration() {
+        if (tail == null) return 0;
+        int total = 0;
+        Node n = headNode();
+        for (int i = 0; i < size; i++) {
+            total += n.data.duration;
+            n = n.next;
+        }
+        return total;
+    }
+
+    // Deep-copy the circular list so callers can move an independent cursor
+    public SlideList copy() {
+        SlideList copy = new SlideList();
+        if (tail == null) return copy;
+
+        Node n = headNode();
+        for (int i = 0; i < size; i++) {
+            Slide s = n.data;
+            copy.insert(new Slide(s.name, s.duration));
+            n = n.next;
+        }
+        return copy;
     }
 
     public String toString() {

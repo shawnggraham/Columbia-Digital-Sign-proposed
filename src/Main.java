@@ -3,6 +3,12 @@ public class Main {
         //new Generator("data.JSON");
 
         //StudentList studentList = StudentList.generateStudentList();
-        SlideList slideList = SlideList.generateSlideList();
+
+        int slideListSize = 20;
+
+        // methods to generate a slide list and student list,
+        // use the size parameter to change the size of the lists
+        SlideList slideList = SlideList.generateSlideList(20);
+        StudentList studentList = StudentList.generateStudentList(10);
     }
 }
