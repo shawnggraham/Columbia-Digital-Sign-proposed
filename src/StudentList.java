@@ -21,9 +21,7 @@ public class StudentList {
     public static StudentList generateStudentList(int size) throws InterruptedException {
         StudentList list = new StudentList();
         Random random = new Random();
-        // Creating a new student list object.
-        // Creating students, adding 20 to the circular list.
-        // Storing slide names and durations
+
         int studentID = 1;
         boolean slideWatched = false;
 

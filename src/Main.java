@@ -4,11 +4,11 @@ public class Main {
 
         //StudentList studentList = StudentList.generateStudentList();
 
-        int slideListSize = 20;
+
 
         // methods to generate a slide list and student list,
         // use the size parameter to change the size of the lists
         SlideList slideList = SlideList.generateSlideList(20);
-        StudentList studentList = StudentList.generateStudentList(10);
+        StudentList studentList = StudentList.generateStudentList( 10);
     }
 }
