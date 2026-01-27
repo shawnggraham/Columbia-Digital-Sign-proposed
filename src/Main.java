@@ -1,6 +1,6 @@
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        //new Generator("data.JSON");
+        new Generator("data.JSON");
 
         //StudentList studentList = StudentList.generateStudentList();
 
@@ -8,7 +8,7 @@ public class Main {
 
         // methods to generate a slide list and student list,
         // use the size parameter to change the size of the lists
-        SlideList slideList = SlideList.generateSlideList(20);
-        StudentList studentList = StudentList.generateStudentList( 10);
+       // SlideList slideList = SlideList.generateSlideList(20);
+       // StudentList studentList = StudentList.generateStudentList( 10);
     }
 }
