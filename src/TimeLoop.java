@@ -1,5 +1,4 @@
 public class TimeLoop {
-
     public static void main(String[] args) throws InterruptedException {
 
         String GREEN = "\u001B[32m";
@@ -10,28 +9,28 @@ public class TimeLoop {
 
         int STEP = 0; // tracks seconds elapsed
         int DAY = 1;
-        double hours;
-        int minutes;
-        String AMPM;
 
         while (STEP < secondsPerDay) {
+            Thread.sleep(1);
             STEP++;
-            hours = (double) STEP / secondsPerHour;
-            minutes = (int) (hours % 1 * 60);
 
-            if (hours >= 12){
-                AMPM = "pm";
-            } else {
-                AMPM = "am";
-            }
+            int hour24 = (STEP / secondsPerHour) % 24;
+            int minute = (STEP / 60) % 60;
+            int minutesElapsed = STEP / 60;
+            int second = STEP % 60;
+            int hours =  STEP / secondsPerHour;
+
+            String AMPM = (hour24 >= 12) ? "pm" : "am";
+            int hour12 = hour24 % 12;
+            if (hour12 == 0) hour12 = 12;
 
             System.out.print("\r Day " + DAY);
-            System.out.print("  [ Standard Time: " + GREEN + String.format("%02d:%02d", (int)hours, minutes % 60) + RESET + AMPM + " ]");
-            System.out.print("  [ Time in seconds: " + GREEN + STEP + RESET + "s" + " ]" );
-            System.out.print("  [ Time in minutes: " + GREEN + String.format("%.2f",hours*60) + RESET + "m" + " ]" );
-            System.out.printf("  [ Time in hours: "+ GREEN + String.format("%.2f",hours) + RESET + "h" +  " ]" );
+            System.out.print("  [ Standard Time: " + GREEN + String.format("%02d:%02d:%02d", hour12, minute, second) + RESET + AMPM + " ]");
+            System.out.print("  [ Daily Time Elapsed: "
+                    + GREEN + hours + RESET + "h" + " "
+                    + GREEN + minutesElapsed + RESET + "m" + " "
+                    + GREEN + STEP + RESET + "s ]" );
 
-            Thread.sleep(1);
             if (STEP == secondsPerDay) {
                 DAY++;
                 STEP = 0;
