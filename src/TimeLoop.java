@@ -23,9 +23,10 @@ public class TimeLoop {
             if (hours >= 12) AMPM = "pm"; else AMPM = "am";
 
             System.out.print("\r Day " + DAY);
+            System.out.print("  [ Standard Time: " + GREEN + String.format("%02d:%02d", (int)hours, minutes % 60) + RESET + AMPM + " ]");
             System.out.print("  [ Time in seconds: " + GREEN + STEP + RESET + "s" + " ]" );
+            System.out.print("  [ Time in minutes: " + GREEN + String.format("%.2f",hours*60) + RESET + "m" + " ]" );
             System.out.printf("  [ Time in hours: "+ GREEN + String.format("%.2f",hours) + RESET + "h" +  " ]" );
-            System.out.print("   [ Time: " + GREEN + String.format("%02d:%02d", (int)hours, minutes % 60) + RESET + AMPM + " ]");
 
             Thread.sleep(1);
             if (STEP == secondsPerDay) {
@@ -33,7 +34,7 @@ public class TimeLoop {
                 STEP = 0;
 
                 Thread.sleep(1000);
-                if (DAY == 4) System.exit(0);
+                if (DAY == 5) System.exit(0);
             }
         }
     }
