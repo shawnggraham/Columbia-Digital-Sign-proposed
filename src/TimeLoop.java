@@ -7,9 +7,8 @@ public class TimeLoop {
 
         int secondsPerDay = 86400;
         int secondsPerHour = 3600;
-        int secondsPerMinute = 60;
 
-        int STEP = 0;
+        int STEP = 0; // tracks seconds elapsed
         int DAY = 1;
         double hours;
         int minutes;
@@ -20,7 +19,11 @@ public class TimeLoop {
             hours = (double) STEP / secondsPerHour;
             minutes = (int) (hours % 1 * 60);
 
-            if (hours >= 12) AMPM = "pm"; else AMPM = "am";
+            if (hours >= 12){
+                AMPM = "pm";
+            } else {
+                AMPM = "am";
+            }
 
             System.out.print("\r Day " + DAY);
             System.out.print("  [ Standard Time: " + GREEN + String.format("%02d:%02d", (int)hours, minutes % 60) + RESET + AMPM + " ]");
@@ -33,8 +36,9 @@ public class TimeLoop {
                 DAY++;
                 STEP = 0;
 
-                Thread.sleep(1000);
-                if (DAY == 5) System.exit(0);
+                if (DAY == 5){
+                    System.exit(0);
+                }
             }
         }
     }
