@@ -1,7 +1,8 @@
+import java.io.IOException;
 import java.util.Random;
 
 public class SimulationLoop {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
 
         final int DAYS = 4;
 
@@ -14,7 +15,6 @@ public class SimulationLoop {
 
         int cycleSeconds = slideList.cycleDuration();
         if (cycleSeconds <= 0) throw new IllegalStateException("Slide cycle duration must be > 0");
-
 
         for (int day = 0; day < DAYS; day++) {
             for (int i = 0; i < students.size(); i++) {

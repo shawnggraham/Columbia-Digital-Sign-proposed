@@ -5,14 +5,16 @@
 
 public class Slide {
      public int duration;
-     public int name;
+     public int ID;
+     public String name;
 
-     Slide(int name, int duration) {
+     Slide(String name, int ID, int duration) {
          this.duration = duration;
          this.name = name;
+         this.ID = ID;
      }
 
      public String toString() {
-         return "Slide #" + this.name + " [Duration: " + this.duration + "s]";
+         return "Slide " + this.name + " # " + ID + " [Duration: " + this.duration + "s]";
      }
 }
