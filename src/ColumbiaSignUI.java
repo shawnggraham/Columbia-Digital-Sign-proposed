@@ -21,7 +21,7 @@ public class ColumbiaSignUI extends JFrame {
     private JList<String> slideList;
 
     /* ===============================
-       Global Settings (not wired yet)
+        Global Settings (not wiredyet)
        =============================== */
     private JSpinner spnStudentsPerDay;
     private JButton btnSaveStudents;
