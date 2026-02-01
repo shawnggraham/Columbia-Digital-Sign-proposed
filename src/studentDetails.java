@@ -6,7 +6,7 @@ public class studentDetails {
     =========================================================
     */
 
-    //going to start by listing out potential data we're going to track
+    //going to start by listing out potential data we're going to track.
         private String name;
         private String date;
         private Integer arrivalTime;

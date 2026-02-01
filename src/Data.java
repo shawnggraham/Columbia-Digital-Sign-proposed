@@ -6,7 +6,7 @@ public class Data {
 
     /*
     =================================
-    Retriever and Sender Class
+    Retriever and Sender Class.
     =================================
      */
 
