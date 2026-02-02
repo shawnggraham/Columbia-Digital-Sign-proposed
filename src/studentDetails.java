@@ -14,14 +14,14 @@ public class studentDetails {
 
     //going to start by listing out potential data we're going to track.
         private String name;
-        private String date;
+        private int ID;
         private Integer arrivalTime;
         private Integer slidesWatched;
 
-    public studentDetails(String name, String date, Integer arrivalTime, Integer slidesWatched) {
+    public studentDetails(String name, int ID, Integer arrivalTime, Integer slidesWatched) {
         super();
         this.name = name;
-        this.date = date;
+        this.ID = ID;
         this.arrivalTime = arrivalTime;
         this.slidesWatched = slidesWatched;
     }
@@ -38,12 +38,12 @@ public class studentDetails {
         this.name = name;
     }
 
-    public String getDate() {
-        return date;
+    public Integer getID() {
+        return ID;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setID(int ID) {
+        this.ID = ID;
     }
 
     public Integer getArrivalTime(Integer arrivalTime) {

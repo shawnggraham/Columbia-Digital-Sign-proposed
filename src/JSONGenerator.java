@@ -8,7 +8,7 @@ public class JSONGenerator {
 
     Gson gson = new Gson();
 
-   JSONGenerator (String filename) {
+   JSONGenerator (String filename, studentDetails data) {
         //get the JSON writer going
         try (BufferedWriter bWriter = new BufferedWriter(new FileWriter(filename, true))) {
 
@@ -30,18 +30,17 @@ public class JSONGenerator {
      */
 
    public studentDetails data() {
-       //temporary variables to fill class
-       String tempName = "name";
-       String tempDate = "date";
-       int tempArrivalTime = 60;
-       int tempSlidesWatched = 1;
 
-       //fill and return the data
+       // Creating a student object
+       Student student = new Student("Default",0,0,0);
+
+       // Use student object data to fill the studentDetails object
        return new studentDetails(
-               tempName,
-               tempDate,
-               tempArrivalTime,
-               tempSlidesWatched
+               student.name,
+               student.ID,
+               student.arrivalTime,
+               student.SLIDES_WATCHED_TOTAL
+
        );
    }
 }
