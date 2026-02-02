@@ -2,34 +2,25 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException, IOException {
-        main
-        //new Generator("data.JSON");
 
-        new JSONGenerator("data.JSON");
-        main
+        new JSONGenerator("data1.JSON", new studentDetails("Bob",0,0,0));
+
+        SlideList list = new SlideList();
+        list.insert(new Slide("Slide1", 1, 10));
+        list.insert(new Slide("Slide2", 2, 10));
+        list.insert(new Slide("Slide3", 3, 10));
+
+        for (int i = 0; i < list.size(); i++) {
+            System.out.println(list.next());
+        }
 
         StudentList studentList = new StudentList();
+        studentList.insert(new Student("Bob", 1, 0, 0));
+        studentList.insert(new Student("Alice", 2, 0, 0));
+        studentList.insert(new Student("Carol", 3, 0, 0));
 
-        studentList.insert(new Student("Ben", 1, 0, 0));
-        studentList.insert(new Student("Bob", 2, 0, 0));
-        studentList.insert(new Student("Rob", 3, 0, 0));
-        studentList.insert(new Student("Tim", 4, 0, 0));
-
-        System.out.println(studentList.size());
-
-        main
-        System.out.println(studentList.next());
-        System.out.println(studentList.next());
-        System.out.println(studentList.next());
-        System.out.println(studentList.next());
-        System.out.println(studentList.next());
-
-//        int variable = 0;
-
-        // methods to generate a slide list and student list,
-        // use the size parameter to change the size of the lists
-//        SlideList slideList = SlideList.generateSlideList(20);
-//        StudentList studentList = StudentList.generateStudentList( 10);
-         main
+        for (int i = 0; i < studentList.size(); i++) {
+            System.out.println(studentList.next());
+        }
     }
 }
