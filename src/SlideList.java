@@ -31,13 +31,14 @@ public class SlideList {
         Slide slide;
         // Storing slide names and durations
         int slideName = 1;
+        String name = "Slide";
 
         System.out.println("Generating lists of slides");
         Thread.sleep(1000);
         while (list.size() < size) {
             System.out.println("\nAdding slide " + slideName);
             slideDuration = random.nextInt(10, 20);
-            slide = new Slide(slideName, slideDuration);
+            slide = new Slide(name, slideName, slideDuration);
             slideName++;
             list.insert(slide);
             System.out.println(slide);
@@ -51,6 +52,10 @@ public class SlideList {
 
     public int getSlideListDuration(){
         return slideDurationTotal;
+    }
+
+    public int getSlideDuration(){
+        return slideDuration;
     }
 
     // Node class
@@ -128,7 +133,7 @@ public class SlideList {
         Node n = headNode();
         for (int i = 0; i < size; i++) {
             Slide s = n.data;
-            copy.insert(new Slide(s.name, s.duration));
+            copy.insert(new Slide(s.name, s.ID, s.duration));
             n = n.next;
         }
         return copy;

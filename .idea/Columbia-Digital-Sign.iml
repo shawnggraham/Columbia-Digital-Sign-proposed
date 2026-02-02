@@ -10,7 +10,11 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
+
           <root url="jar://$USER_HOME$/git/gson-2.13.2.jar!/" />
+
+          <root url="jar://$USER_HOME$/Downloads/gson-2.13.2.jar!/" />
+
         </CLASSES>
         <JAVADOC />
         <SOURCES />

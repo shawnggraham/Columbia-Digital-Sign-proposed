@@ -8,6 +8,10 @@
  * .currentStudent() method returns the current student data
  */
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class StudentList {
@@ -18,19 +22,26 @@ public class StudentList {
     private Node tail = null;
     private Node current = null;
 
-    public static StudentList generateStudentList(int size) throws InterruptedException {
+    public static ArrayList<String> possibleWords = new ArrayList<>();
+
+    public static StudentList generateStudentList(int size) throws InterruptedException, IOException {
         StudentList list = new StudentList();
         Random random = new Random();
 
         int studentID = 1;
+        String name = "Student";
+
         boolean slideWatched = false;
 
         System.out.println("Generating lists of students");
         Thread.sleep(1000);
 
+        new BufferedReader(new FileReader("src/first-names.txt"));
+
         while (list.size() < size){
-            System.out.println("\nAdding student ID: " + studentID);
-            Student student = new Student(studentID, 0, slideWatched);
+
+           // System.out.println("\nStudent: " + name + " ID # " + studentID + "Arrives at school @"+ arrivalTime);
+            Student student = new Student(name, studentID, 0, 0);
             studentID++;
             list.insert(student);
             System.out.println(student);
@@ -87,6 +98,33 @@ public class StudentList {
     // Method to return the size of the list
     public int size() {
         return size;
+    }
+
+    public static void readFile(){
+        // reading a file using a buffered reader and a try with resources
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/first-names.txt"))){
+            System.out.println("Reading source file: \u001b[1m first-names.txt \u001b[0m");
+            String line = reader.readLine();
+            // read each line and add it to the list of possible words
+            while (line != null){
+                //System.out.println(line);
+                line = reader.readLine();
+                // add it to the list of possible words, with a space for readability
+                possibleWords.add(line + " ");
+            }
+            // catching any errors that occur during reading
+        }catch(IOException exception){
+            System.out.println("\u001b[31m Error parsing file \u001b[0m");
+            exception.printStackTrace();
+            return;
+        }
+        System.out.println("\u001b[32m* Read completed with 0 errors * \u001b[0m");
+    }
+
+    public void getRandomName(){
+        Random random = new Random();
+        possibleWords.get(random.nextInt(possibleWords.size()));
+
     }
 }
 
