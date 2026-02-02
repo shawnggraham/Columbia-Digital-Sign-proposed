@@ -13,13 +13,12 @@ public class TimeLoop {
         int DAY = 1;
 
 
-        SlideList slides = SlideList.generateSlideList(20);
-        StudentList student = StudentList.generateStudentList(5);
+        //SlideList slides = SlideList.generateSlideList(20);
+        //StudentList student = StudentList.generateStudentList(5);
 
         while (STEP < secondsPerDay) {
             Thread.sleep(1);
             STEP ++;
-
 
             int hour24 = (STEP / secondsPerHour) % 24;
             int minute = (STEP / 60) % 60;
@@ -38,9 +37,7 @@ public class TimeLoop {
                     + GREEN + minutesElapsed + RESET + "m" + " "
                     + GREEN + STEP + RESET + "s ]" );
 
-            if (hours == 1 && minute == 0 && second == 0) {
 
-            }
             if (STEP == secondsPerDay) {
                 DAY++;
                 STEP = 0;
