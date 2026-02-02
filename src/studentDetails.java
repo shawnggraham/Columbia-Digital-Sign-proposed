@@ -1,3 +1,9 @@
+   /* *
+    * temporary data object that contains student details to save to a JSON
+    * <p>
+    * used for input detection, then discarded when saved to JSON
+    */
+
 public class studentDetails {
 
     /*
