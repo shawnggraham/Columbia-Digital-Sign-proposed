@@ -2,7 +2,11 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException, IOException {
+        main
         //new Generator("data.JSON");
+
+        new JSONGenerator("data.JSON");
+        main
 
         StudentList studentList = new StudentList();
 
@@ -13,11 +17,19 @@ public class Main {
 
         System.out.println(studentList.size());
 
+        main
         System.out.println(studentList.next());
         System.out.println(studentList.next());
         System.out.println(studentList.next());
         System.out.println(studentList.next());
         System.out.println(studentList.next());
 
+//        int variable = 0;
+
+        // methods to generate a slide list and student list,
+        // use the size parameter to change the size of the lists
+//        SlideList slideList = SlideList.generateSlideList(20);
+//        StudentList studentList = StudentList.generateStudentList( 10);
+         main
     }
 }
