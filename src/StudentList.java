@@ -36,12 +36,12 @@ public class StudentList {
         System.out.println("Generating lists of students");
         Thread.sleep(1000);
 
-        new BufferedReader(new FileReader("first-names.txt"));
+        new BufferedReader(new FileReader("src/first-names.txt"));
 
         while (list.size() < size){
 
-            System.out.println("\nAdding student: " + name + " ID # " + studentID);
-            Student student = new Student(name, studentID, 0);
+           // System.out.println("\nStudent: " + name + " ID # " + studentID + "Arrives at school @"+ arrivalTime);
+            Student student = new Student(name, studentID, 0, 0);
             studentID++;
             list.insert(student);
             System.out.println(student);

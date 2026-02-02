@@ -54,6 +54,10 @@ public class SlideList {
         return slideDurationTotal;
     }
 
+    public int getSlideDuration(){
+        return slideDuration;
+    }
+
     // Node class
     private static class Node {
         // Data and next node
