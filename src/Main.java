@@ -1,10 +1,8 @@
 
 import javax.swing.SwingUtilities;
-
+import java.io.IOException;
 public class Main {
-
-    public static void main(String[] args) throws InterruptedException {
-
+    public static void main(String[] args) throws InterruptedException, IOException {
         /*
          * --------------------------------------------
          * DATA / GENERATION SETUP
@@ -15,19 +13,7 @@ public class Main {
 
         // new Generator("data.JSON");
 
-        /*
-         * --------------------------------------------
-         * UI ENTRY POINT
-         * --------------------------------------------
-         * This simply says:
-         * "When the app starts, show the UI."
-         */
-
-        SwingUtilities.invokeLater(() -> {
-            new ColumbiaSignUI();
-        });
-
-        /*
+       /*
          * --------------------------------------------
          * FUTURE EXTENSIONS (DO NOT DELETE we will name them appropriately)
          * --------------------------------------------
@@ -36,10 +22,9 @@ public class Main {
         // SlideList slideList = SlideList.generateSlideList(20);
         // StudentList studentList = StudentList.generateStudentList(10);
 
-import java.io.IOException;
 
-public class Main {
-    public static void main(String[] args) throws InterruptedException, IOException {
+
+
 
         new JSONGenerator("data1.JSON", new studentDetails("Bob",0,0,0));
 
@@ -60,5 +45,16 @@ public class Main {
         for (int i = 0; i < studentList.size(); i++) {
             System.out.println(studentList.next());
         }
+        /*
+         * --------------------------------------------
+         * UI ENTRY POINT
+         * --------------------------------------------
+         * This simply says:
+         * "When the app starts, show the UI."
+         */
+        SwingUtilities.invokeLater(() -> {
+            new ColumbiaSignUI();
+        });
     }
+
 }
