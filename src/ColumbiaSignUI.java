@@ -730,10 +730,17 @@ public class ColumbiaSignUI extends JFrame {
                 old.setTripsPerWeek(trips);
                 studentList.repaint();
                 lblStatus.setText("Updated student.");
+
+                // SAMPLE CALL (update case)
+                StudentSample.handleStudent(old.getStudentId(), old.getStudentName(), old.getTripsPerWeek());
+
             } else {
                 StudentDef def = new StudentDef(nextStudentId++, name, trips);
                 studentModel.addElement(def);
                 lblStatus.setText("Added student.");
+
+                // SAMPLE CALL (add case)
+                StudentSample.handleStudent(def.getStudentId(), def.getStudentName(), def.getTripsPerWeek());
             }
 
             clearStudentFields();
