@@ -23,10 +23,7 @@ public class Main {
         // StudentList studentList = StudentList.generateStudentList(10);
 
 
-
-
-
-        new JSONGenerator("data1.JSON", new studentDetails("Bob",0,0,0));
+        new JSONGenerator("data1.JSON");
 
         SlideList list = new SlideList();
         list.insert(new Slide("Slide1", 1, 10));

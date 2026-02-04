@@ -4,18 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a8d8f88e-67ad-4f99-9b01-683fa94217ba" name="Changes" comment="fixed the two main issue">
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/ColumbiaSignUI.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/ColumbiaSignUI.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/Data.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/Generator.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/SimulationLoop.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/SimulationLoop.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/Slide.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/Slide.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/SlideList$Node.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/SlideList$Node.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/SlideList.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/SlideList.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/Student.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/Student.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/StudentList$Node.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/StudentList$Node.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/StudentList.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/Columbia-Digital-Sign/StudentList.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ColumbiaSignUI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ColumbiaSignUI.java" afterDir="false" />
+    <list default="true" id="a8d8f88e-67ad-4f99-9b01-683fa94217ba" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/src/JSONGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/JSONGenerator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Main.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,46 +23,46 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "shawnggraham"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;shawnggraham&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/shawnggraham/Columbia-Digital-Sign.git",
-    "accountId": "deffdea1-c2d3-47ef-9c78-93ffae06c8d9"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/shawnggraham/Columbia-Digital-Sign.git&quot;,
+    &quot;accountId&quot;: &quot;deffdea1-c2d3-47ef-9c78-93ffae06c8d9&quot;
   }
-}]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8
-}]]></component>
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="398nb0YnQ4hiBHSYRhpPrYzo117" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.ColumbiaSignUI.executor": "Run",
-    "Application.Main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.ColumbiaSignUI.executor&quot;: &quot;Run&quot;,
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
