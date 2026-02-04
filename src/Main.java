@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.IOException;
 
 public class Main {
@@ -5,6 +6,11 @@ public class Main {
         new JSONGenerator("data.JSON");
 
         //StudentList studentList = StudentList.generateStudentList();
+
+
+//        SwingUtilities.invokeLater(() -> {
+//            new ColumbiaSignUI();
+//        });
 
 
 

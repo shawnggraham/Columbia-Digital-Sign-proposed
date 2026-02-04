@@ -1,26 +1,12 @@
-   /* *
-    * temporary data object that contains student details to save to a JSON
-    * <p>
-    * used for input detection, then discarded when saved to JSON
-    */
-
-public class studentDetails {
-
-    /*
-    =========================================================
-    Down below is going to be Gavin's test on Object to JSON.
-    =========================================================
-    */
+public class slideDetails {
 
     //going to start by listing out potential data we're going to track.
-        private String name;
-        private String date;
+    private String name;
+    private String date;
+    private Integer arrivalTime;
+    private Integer slidesWatched;
 
-        private Integer arrivalTime;
-        private Integer slidesWatched;
-        private Integer ID;
-
-    public studentDetails(String name, String date, Integer arrivalTime, Integer slidesWatched) {
+    public slideDetails(String name, String date, Integer arrivalTime, Integer slidesWatched) {
         super();
         this.name = name;
         this.date = date;
@@ -32,6 +18,7 @@ public class studentDetails {
     Getters and Setters
     =========================
      */
+
     public String getName() {
         return name;
     }
