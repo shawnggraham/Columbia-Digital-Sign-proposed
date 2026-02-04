@@ -1,24 +1,60 @@
-import javax.swing.*;
-import java.io.IOException;
 
+import javax.swing.SwingUtilities;
+import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws InterruptedException, IOException {
-        new JSONGenerator("data.JSON");
+        /*
+         * --------------------------------------------
+         * DATA / GENERATION SETUP
+         * --------------------------------------------
+         * If the Generator is required to prepare or
+         * validate JSON files, it can still live here.
+         */
 
-        //StudentList studentList = StudentList.generateStudentList();
+        // new Generator("data.JSON");
+
+       /*
+         * --------------------------------------------
+         * FUTURE EXTENSIONS (DO NOT DELETE we will name them appropriately)
+         * --------------------------------------------
+         */
+
+        // SlideList slideList = SlideList.generateSlideList(20);
+        // StudentList studentList = StudentList.generateStudentList(10);
 
 
-//        SwingUtilities.invokeLater(() -> {
-//            new ColumbiaSignUI();
-//        });
 
 
 
-//        int variable = 0;
+        new JSONGenerator("data1.JSON", new studentDetails("Bob",0,0,0));
 
-        // methods to generate a slide list and student list,
-        // use the size parameter to change the size of the lists
-//        SlideList slideList = SlideList.generateSlideList(20);
-//        StudentList studentList = StudentList.generateStudentList( 10);
+        SlideList list = new SlideList();
+        list.insert(new Slide("Slide1", 1, 10));
+        list.insert(new Slide("Slide2", 2, 10));
+        list.insert(new Slide("Slide3", 3, 10));
+
+        for (int i = 0; i < list.size(); i++) {
+            System.out.println(list.next());
+        }
+
+        StudentList studentList = new StudentList();
+        studentList.insert(new Student("Bob", 1, 0, 0));
+        studentList.insert(new Student("Alice", 2, 0, 0));
+        studentList.insert(new Student("Carol", 3, 0, 0));
+
+        for (int i = 0; i < studentList.size(); i++) {
+            System.out.println(studentList.next());
+        }
+        /*
+         * --------------------------------------------
+         * UI ENTRY POINT
+         * --------------------------------------------
+         * This simply says:
+         * "When the app starts, show the UI."
+         */
+        SwingUtilities.invokeLater(() -> {
+            new ColumbiaSignUI();
+        });
     }
+
 }
