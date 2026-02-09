@@ -115,6 +115,10 @@ public class SlideList {
         return data;
     }
 
+    private Node headNode(){
+        return (tail == null) ? null : tail.next;
+    }
+
     public Slide currentSlide(){
         return current.data;
     }
@@ -124,9 +128,7 @@ public class SlideList {
         return size;
     }
 
-    private Node headNode(){
-        return (tail == null) ? null : tail.next;
-    }
+
 
     // Compute cycle duration by walking the linked list once (no arrays)
     public int cycleDuration() {

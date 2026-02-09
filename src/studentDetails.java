@@ -18,12 +18,12 @@ public class studentDetails {
         private Integer arrivalTime;
         private Integer slidesWatched;
 
-    public studentDetails(String name, int ID, Integer arrivalTime, Integer slidesWatched) {
+    public studentDetails(Student student) {
         super();
-        this.name = name;
-        this.ID = ID;
-        this.arrivalTime = arrivalTime;
-        this.slidesWatched = slidesWatched;
+        this.name = student.name;
+        this.ID = student.ID;
+        this.arrivalTime = student.arrivalTime;
+        this.slidesWatched = student.slidesWatchedTotal;
     }
     /*
     =========================

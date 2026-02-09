@@ -32,7 +32,7 @@ public class StudentList {
 
         String name = "Student";
         int studentID = 1;
-        int arrivalTime = 8;
+        int arrivalTime = random.nextInt(5, 8);
         int slidesWatchedTotal = 0;
 
         //new BufferedReader(new FileReader("src/first-names.txt"));
@@ -105,7 +105,7 @@ public class StudentList {
         return size;
     }
 
-    public static void readFile(){
+    public static void readFile() {
         // reading a file using a buffered reader and a try with resources
         try (BufferedReader reader = new BufferedReader(new FileReader("src/first-names.txt"))){
             System.out.println("Reading source file: \u001b[1m first-names.txt \u001b[0m");

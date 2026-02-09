@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class Student {
     public int durationWatched;
     public int slidesWatchedTotal;
@@ -16,7 +18,7 @@ public class Student {
     @Override
     public String toString() {
         return "Student " + this.name + " ID # " + ID +
-                "\n Arrives at school at " + arrivalTime +
+                "\n Arrives at school at " + intToTime(arrivalTime) +
                 "\n [Slides watched: " + slidesWatchedTotal + ", Duration watched: " + durationWatched + "s]";
     }
 
@@ -24,5 +26,9 @@ public class Student {
         System.out.println(this.name + " ID # " + this.ID + "Arrives at school @" + arrivalTime);
         //return System.out.println(this.name);
         return this.ID;
+    }
+
+    public String intToTime(int hours) {
+        return hours + ":" +0+0;
     }
 }
