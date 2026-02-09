@@ -1,3 +1,8 @@
+// FILE: /home/shawng/IdeaProjects/Columbia-Digital-Sign/src/ColumbiaSignUI.java
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -5,32 +10,87 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /*
 =============================================================
 Columbia Sign UI (Swing) — UI-only, JSON-save hooks
-Fixes in this version:
-1) Students tab:
-   - Student Name textbox is wider AND definitely editable/focusable
-2) Save Students JSON:
-   - If no handler is wired, Results panel prints the variable list
-     (same style as Slides)
+
+Key behavior:
+- Students have multiple arrivals (day + time) in-memory
+- Selecting a student shows only their arrivals
+- "Write Student Information to JSON" sends ALL students + arrivals
+  to StudentSample.handleStudents(...) (writes studentData.json)
+- "Save Slides JSON" sends slides to SampleSlides.handleSlides(...) (writes slidesData.json)
+- "Save Config JSON" sends config to SampleConfig.handleConfig(...) (writes configData.json)
+- On startup, UI auto-loads:
+    - studentData.json
+    - slidesData.json
+    - configData.json
+
+NEW:
+- Simulation Start Time dropdown in Config panel (15-minute intervals, HH:mm)
+- Saved/loaded via configData.json
 =============================================================
 */
 
 public class ColumbiaSignUI extends JFrame {
 
     /* ===============================
-       Data Contracts (mutable; getters/setters)
+       BLOCK 0 — Auto-load filenames + Gson
        =============================== */
+    private static final String STUDENTS_JSON_FILE = "studentData.json";
+    private static final String SLIDES_JSON_FILE   = "slidesData.json";
+    private static final String CONFIG_JSON_FILE   = "configData.json";
+
+    private final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .create();
+
+    /* ===============================
+       BLOCK 0.1 — Wrapper types for auto-load
+       (Matches the writers: { generatedAt, students/slides/config })
+       =============================== */
+    private static class StudentFile {
+        String generatedAt;
+        List<StudentDef> students;
+    }
+
+    private static class SlidesFile {
+        String generatedAt;
+        List<SlideDef> slides;
+    }
+
+    private static class ConfigFile {
+        String generatedAt;
+
+        // NEW
+        String simulationStartTime;
+
+        int weeksToSimulate;
+        int schoolDaysPerWeek;
+        int dailyStartOffsetSec;
+        double visibleMeanSec;
+        double visibleStdDevSec;
+        int defaultSlideSec;
+    }
+
+    /* ===============================
+       Data Contracts
+       =============================== */
+
     public static class SlideDef {
-        private int slideId;             // stable identity
-        private int slideOrder;          // firing order 1..N
+        private int slideId;
+        private int slideOrder;
         private String slideName;
         private int durationSeconds;
-        private String imagePath;        // nullable
+        private String imagePath;
+
+        // Needed for Gson
+        public SlideDef() { }
 
         public SlideDef(int slideId, int slideOrder, String slideName, int durationSeconds, String imagePath) {
             this.slideId = slideId;
@@ -52,54 +112,99 @@ public class ColumbiaSignUI extends JFrame {
         public void setImagePath(String imagePath) { this.imagePath = imagePath; }
     }
 
+    /* ===============================
+       STUDENTS + ARRIVALS MODELS
+       =============================== */
+
+    public static class ArrivalDef {
+        private String day;   // Monday..Friday
+        private String time;  // "HH:mm"
+
+        // Needed for Gson
+        public ArrivalDef() { }
+
+        public ArrivalDef(String day, String time) {
+            this.day = day;
+            this.time = time;
+        }
+
+        public String getDay() { return day; }
+        public String getTime() { return time; }
+
+        public void setDay(String day) { this.day = day; }
+        public void setTime(String time) { this.time = time; }
+
+        @Override
+        public String toString() {
+            return day + " @ " + time;
+        }
+    }
+
     public static class StudentDef {
         private int studentId;
         private String studentName;
-        private int tripsPerWeek;
 
-        public StudentDef(int studentId, String studentName, int tripsPerWeek) {
+        // IMPORTANT: not final so Gson can restore it reliably
+        private List<ArrivalDef> arrivals = new ArrayList<>();
+
+        // Needed for Gson
+        public StudentDef() { }
+
+        public StudentDef(int studentId, String studentName) {
             this.studentId = studentId;
             this.studentName = studentName;
-            this.tripsPerWeek = tripsPerWeek;
+            this.arrivals = new ArrayList<>();
         }
 
         public int getStudentId() { return studentId; }
         public String getStudentName() { return studentName; }
-        public int getTripsPerWeek() { return tripsPerWeek; }
+
+        public List<ArrivalDef> getArrivals() {
+            if (arrivals == null) arrivals = new ArrayList<>();
+            return arrivals;
+        }
 
         public void setStudentName(String studentName) { this.studentName = studentName; }
-        public void setTripsPerWeek(int tripsPerWeek) { this.tripsPerWeek = tripsPerWeek; }
+
+        public void addArrival(ArrivalDef a) { getArrivals().add(a); }
+
+        public void removeArrivalAt(int idx) {
+            List<ArrivalDef> list = getArrivals();
+            if (idx < 0 || idx >= list.size()) return;
+            list.remove(idx);
+        }
+
+        public boolean hasArrival(String day, String time) {
+            for (ArrivalDef a : getArrivals()) {
+                if (a == null) continue;
+                if (safeTrim(a.getDay()).equals(day) && safeTrim(a.getTime()).equals(time)) return true;
+            }
+            return false;
+        }
 
         @Override
         public String toString() {
-            return "ID: " + studentId + " | " + studentName + " — trips/week: " + tripsPerWeek;
+            int n = getArrivals().size();
+            return "ID: " + studentId + " | " + studentName + "  (" + n + " arrival" + (n == 1 ? "" : "s") + ")";
         }
     }
 
     public static class SignConfig {
         public final int weeksToSimulate;
         public final int schoolDaysPerWeek;
-        public final int dailyStartOffsetSec;
         public final double visibleMeanSec;
         public final double visibleStdDevSec;
-        public final int defaultSlideSec;
 
         public SignConfig(int weeksToSimulate,
                           int schoolDaysPerWeek,
-                          int dailyStartOffsetSec,
                           double visibleMeanSec,
-                          double visibleStdDevSec,
-                          int defaultSlideSec) {
+                          double visibleStdDevSec) {
             this.weeksToSimulate = weeksToSimulate;
             this.schoolDaysPerWeek = schoolDaysPerWeek;
-            this.dailyStartOffsetSec = dailyStartOffsetSec;
             this.visibleMeanSec = visibleMeanSec;
             this.visibleStdDevSec = visibleStdDevSec;
-            this.defaultSlideSec = defaultSlideSec;
         }
     }
-
-    public enum SimulationMode { FAST, REAL_TIME }
 
     /* ===============================
        JSON Save Hooks (no IO here)
@@ -121,14 +226,13 @@ public class ColumbiaSignUI extends JFrame {
        =============================== */
     private JTabbedPane leftTabs;
 
-    // Slides tab inputs
+    // Slides tab
     private JButton btnBrowseSlideImage;
     private JTextField txtSlideImagePath;
     private JTextField txtSlideName;
     private JSpinner spnSlideDuration;
     private JButton btnAddSlide;
 
-    // Slides table + buttons
     private JTable tblSlides;
     private SlideTableModel slideTableModel;
     private JButton btnMoveSlideUp;
@@ -138,23 +242,32 @@ public class ColumbiaSignUI extends JFrame {
 
     // Students tab
     private JTextField txtStudentName;
-    private JSpinner spnTripsPerWeek;
-    private JButton btnAddOrUpdateStudent;
+    private JButton btnAddStudent;
+    private JButton btnUpdateStudent;
     private JButton btnClearStudentFields;
     private JButton btnDeleteStudent;
-    private JButton btnSaveStudentsJson;
+
     private JList<StudentDef> studentList;
     private DefaultListModel<StudentDef> studentModel;
+
+    private JComboBox<String> cboArrivalDay;
+    private JComboBox<String> cboArrivalTime;
+    private JButton btnAddArrival;
+    private JButton btnRemoveArrival;
+
+    private JList<ArrivalDef> arrivalsList;
+    private DefaultListModel<ArrivalDef> arrivalsModel;
+
+    private JButton btnWriteStudentsJson;
 
     /* ===============================
        UI: Config (Right-Top)
        =============================== */
+    private JComboBox<String> cboSimulationStartTime; // NEW
     private JSpinner spnWeeks;
     private JSpinner spnSchoolDaysPerWeek;
-    private JSpinner spnDailyOffset;
     private JSpinner spnVisibleMean;
     private JSpinner spnVisibleStd;
-    private JSpinner spnDefaultSlideSec;
     private JButton btnSaveConfigJson;
 
     /* ===============================
@@ -205,6 +318,12 @@ public class ColumbiaSignUI extends JFrame {
 
         setLocationRelativeTo(null);
         setVisible(true);
+
+        // Auto-load JSON after UI is live and models exist
+        SwingUtilities.invokeLater(() -> {
+            txtStudentName.requestFocusInWindow();
+            autoLoadJsonOnStartup();
+        });
     }
 
     /* ===============================
@@ -248,9 +367,7 @@ public class ColumbiaSignUI extends JFrame {
         }
 
         public void renumberOrders() {
-            for (int i = 0; i < slides.size(); i++) {
-                slides.get(i).setSlideOrder(i + 1);
-            }
+            for (int i = 0; i < slides.size(); i++) slides.get(i).setSlideOrder(i + 1);
         }
 
         @Override public int getRowCount() { return slides.size(); }
@@ -270,9 +387,7 @@ public class ColumbiaSignUI extends JFrame {
         }
 
         @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return false;
-        }
+        public boolean isCellEditable(int rowIndex, int columnIndex) { return false; }
     }
 
     /* ===============================
@@ -296,7 +411,7 @@ public class ColumbiaSignUI extends JFrame {
         gc.fill = GridBagConstraints.HORIZONTAL;
         gc.weightx = 1;
 
-        // Row 0: image browse
+        // Row 0
         btnBrowseSlideImage = new JButton("Browse Image...");
         txtSlideImagePath = new JTextField();
         txtSlideImagePath.setEditable(false);
@@ -308,7 +423,7 @@ public class ColumbiaSignUI extends JFrame {
         panel.add(txtSlideImagePath, gc);
         gc.gridwidth = 1;
 
-        // Row 1: name
+        // Row 1
         gc.gridx = 0; gc.gridy = 1; gc.weightx = 0; gc.fill = GridBagConstraints.NONE;
         panel.add(new JLabel("Slide Name:"), gc);
 
@@ -317,7 +432,7 @@ public class ColumbiaSignUI extends JFrame {
         panel.add(txtSlideName, gc);
         gc.gridwidth = 1;
 
-        // Row 2: duration + add
+        // Row 2
         gc.gridx = 0; gc.gridy = 2; gc.weightx = 0; gc.fill = GridBagConstraints.NONE;
         panel.add(new JLabel("Duration (sec):"), gc);
 
@@ -329,7 +444,7 @@ public class ColumbiaSignUI extends JFrame {
         gc.gridx = 2; gc.gridy = 2; gc.weightx = 0; gc.fill = GridBagConstraints.NONE;
         panel.add(btnAddSlide, gc);
 
-        // Row 3: table
+        // Row 3
         slideTableModel = new SlideTableModel();
         tblSlides = new JTable(slideTableModel);
         tblSlides.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -337,14 +452,13 @@ public class ColumbiaSignUI extends JFrame {
         tblSlides.getColumnModel().getColumn(0).setMaxWidth(70);
 
         JScrollPane scroll = new JScrollPane(tblSlides);
-
         gc.gridx = 0; gc.gridy = 3; gc.gridwidth = 4;
         gc.weightx = 1; gc.weighty = 1;
         gc.fill = GridBagConstraints.BOTH;
         panel.add(scroll, gc);
         gc.gridwidth = 1;
 
-        // Row 4: buttons
+        // Row 4
         JPanel rowButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         btnMoveSlideUp = new JButton("Move Up");
         btnMoveSlideDown = new JButton("Move Down");
@@ -374,69 +488,134 @@ public class ColumbiaSignUI extends JFrame {
 
         int row = 0;
 
-        // Label
+        // Name row
         gc.gridx = 0; gc.gridy = row; gc.weightx = 0; gc.fill = GridBagConstraints.NONE;
         panel.add(new JLabel("Student Name:"), gc);
 
-        // Textbox (WIDER + explicitly editable/focusable)
         txtStudentName = new JTextField();
-        txtStudentName.setColumns(28);
+        txtStudentName.setColumns(24);
         txtStudentName.setEditable(true);
         txtStudentName.setEnabled(true);
         txtStudentName.setFocusable(true);
-        txtStudentName.setMinimumSize(new Dimension(320, 28));
-        txtStudentName.setPreferredSize(new Dimension(420, 28));
+        txtStudentName.setMinimumSize(new Dimension(260, 28));
+        txtStudentName.setPreferredSize(new Dimension(360, 28));
 
         gc.gridx = 1; gc.gridy = row; gc.weightx = 1; gc.gridwidth = 3; gc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(txtStudentName, gc);
         gc.gridwidth = 1;
         row++;
 
-        // Trips/week
-        gc.gridx = 0; gc.gridy = row; gc.weightx = 0; gc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Trips Per Week:"), gc);
-
-        spnTripsPerWeek = new JSpinner(new SpinnerNumberModel(4, 1, 20, 1));
-        gc.gridx = 1; gc.gridy = row; gc.weightx = 0.5; gc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(spnTripsPerWeek, gc);
-
-        JPanel rowBtns = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        btnAddOrUpdateStudent = new JButton("Add Student");
+        // Buttons row
+        JPanel studentBtns = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        btnAddStudent = new JButton("Add Student");
+        btnUpdateStudent = new JButton("Update Student");
+        btnUpdateStudent.setEnabled(false);
         btnClearStudentFields = new JButton("Clear");
-        rowBtns.add(btnAddOrUpdateStudent);
-        rowBtns.add(btnClearStudentFields);
+        btnDeleteStudent = new JButton("Delete Selected");
 
-        gc.gridx = 2; gc.gridy = row; gc.gridwidth = 2; gc.weightx = 0.5; gc.fill = GridBagConstraints.NONE;
-        panel.add(rowBtns, gc);
+        studentBtns.add(btnAddStudent);
+        studentBtns.add(btnUpdateStudent);
+        studentBtns.add(btnClearStudentFields);
+        studentBtns.add(btnDeleteStudent);
+
+        gc.gridx = 0; gc.gridy = row; gc.gridwidth = 4;
+        gc.weightx = 1; gc.weighty = 0;
+        gc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(studentBtns, gc);
         gc.gridwidth = 1;
         row++;
 
-        // List
+        // Student list (shorter)
         studentModel = new DefaultListModel<>();
         studentList = new JList<>(studentModel);
         studentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane stScroll = new JScrollPane(studentList);
+        stScroll.setPreferredSize(new Dimension(10, 170));
+
         gc.gridx = 0; gc.gridy = row; gc.gridwidth = 4;
-        gc.weightx = 1; gc.weighty = 1;
+        gc.weightx = 1; gc.weighty = 0.35;
         gc.fill = GridBagConstraints.BOTH;
         panel.add(stScroll, gc);
         gc.gridwidth = 1;
         row++;
 
-        // Delete + Save
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        btnDeleteStudent = new JButton("Delete Selected");
-        btnSaveStudentsJson = new JButton("Save Students JSON");
-        bottom.add(btnDeleteStudent);
-        bottom.add(btnSaveStudentsJson);
+        // Arrivals section
+        JPanel arrivalsPanel = new JPanel(new GridBagLayout());
+        arrivalsPanel.setBorder(new TitledBorder("Arrivals (for selected student)"));
+
+        GridBagConstraints ac = new GridBagConstraints();
+        ac.insets = new Insets(6, 6, 6, 6);
+        ac.fill = GridBagConstraints.HORIZONTAL;
+
+        int arow = 0;
+
+        ac.gridx = 0; ac.gridy = arow; ac.weightx = 0;
+        arrivalsPanel.add(new JLabel("Arrival Day:"), ac);
+
+        cboArrivalDay = new JComboBox<>(new String[]{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"});
+        ac.gridx = 1; ac.gridy = arow; ac.weightx = 0.5;
+        arrivalsPanel.add(cboArrivalDay, ac);
+
+        ac.gridx = 2; ac.gridy = arow; ac.weightx = 0;
+        arrivalsPanel.add(new JLabel("Arrival Time:"), ac);
+
+        cboArrivalTime = new JComboBox<>(buildQuarterHourTimes());
+        cboArrivalTime.setSelectedItem("08:00");
+        ac.gridx = 3; ac.gridy = arow; ac.weightx = 0.5;
+        arrivalsPanel.add(cboArrivalTime, ac);
+
+        arow++;
+
+        JPanel arrivalBtns = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        btnAddArrival = new JButton("Add Arrival");
+        btnRemoveArrival = new JButton("Remove Selected Arrival");
+        btnAddArrival.setEnabled(false);
+        btnRemoveArrival.setEnabled(false);
+
+        arrivalBtns.add(btnAddArrival);
+        arrivalBtns.add(btnRemoveArrival);
+
+        ac.gridx = 0; ac.gridy = arow; ac.gridwidth = 4; ac.weightx = 1;
+        arrivalsPanel.add(arrivalBtns, ac);
+        ac.gridwidth = 1;
+        arow++;
+
+        arrivalsModel = new DefaultListModel<>();
+        arrivalsList = new JList<>(arrivalsModel);
+        arrivalsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane arScroll = new JScrollPane(arrivalsList);
+        arScroll.setPreferredSize(new Dimension(10, 170));
+
+        ac.gridx = 0; ac.gridy = arow; ac.gridwidth = 4;
+        ac.weightx = 1; ac.weighty = 1;
+        ac.fill = GridBagConstraints.BOTH;
+        arrivalsPanel.add(arScroll, ac);
+        arow++;
+
+        btnWriteStudentsJson = new JButton("Write Student Information to JSON");
+        ac.gridx = 0; ac.gridy = arow; ac.gridwidth = 4;
+        ac.weightx = 1; ac.weighty = 0;
+        ac.fill = GridBagConstraints.HORIZONTAL;
+        arrivalsPanel.add(btnWriteStudentsJson, ac);
 
         gc.gridx = 0; gc.gridy = row; gc.gridwidth = 4;
-        gc.weightx = 1; gc.weighty = 0;
-        gc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(bottom, gc);
+        gc.weightx = 1; gc.weighty = 0.65;
+        gc.fill = GridBagConstraints.BOTH;
+        panel.add(arrivalsPanel, gc);
 
         return panel;
+    }
+
+    private String[] buildQuarterHourTimes() {
+        List<String> times = new ArrayList<>(96);
+        for (int hour = 0; hour < 24; hour++) {
+            for (int min = 0; min < 60; min += 15) {
+                times.add(String.format("%02d:%02d", hour, min));
+            }
+        }
+        return times.toArray(new String[0]);
     }
 
     /* ===============================
@@ -460,6 +639,24 @@ public class ColumbiaSignUI extends JFrame {
 
         int row = 0;
 
+        // NEW: Simulation Start Time (top)
+        gc.gridx = 0; gc.gridy = row; gc.weightx = 0;
+        panel.add(new JLabel("Simulation Start Time:"), gc);
+
+        cboSimulationStartTime = new JComboBox<>(buildQuarterHourTimes());
+        cboSimulationStartTime.setSelectedItem("06:00");
+
+        gc.gridx = 1; gc.gridy = row; gc.weightx = 1;
+        panel.add(cboSimulationStartTime, gc);
+
+        gc.gridx = 2; gc.gridy = row; gc.weightx = 0;
+        panel.add(new JLabel(""), gc);
+
+        gc.gridx = 3; gc.gridy = row; gc.weightx = 1;
+        panel.add(new JLabel(""), gc);
+
+        row++;
+
         gc.gridx = 0; gc.gridy = row; gc.weightx = 0;
         panel.add(new JLabel("Weeks to Simulate:"), gc);
 
@@ -473,22 +670,6 @@ public class ColumbiaSignUI extends JFrame {
         spnSchoolDaysPerWeek = new JSpinner(new SpinnerNumberModel(5, 1, 7, 1));
         gc.gridx = 3; gc.gridy = row; gc.weightx = 1;
         panel.add(spnSchoolDaysPerWeek, gc);
-
-        row++;
-
-        gc.gridx = 0; gc.gridy = row; gc.weightx = 0;
-        panel.add(new JLabel("Daily Start Offset (sec):"), gc);
-
-        spnDailyOffset = new JSpinner(new SpinnerNumberModel(-60, -3600, 3600, 5));
-        gc.gridx = 1; gc.gridy = row; gc.weightx = 1;
-        panel.add(spnDailyOffset, gc);
-
-        gc.gridx = 2; gc.gridy = row; gc.weightx = 0;
-        panel.add(new JLabel("Default Slide (sec):"), gc);
-
-        spnDefaultSlideSec = new JSpinner(new SpinnerNumberModel(20, 1, 3600, 1));
-        gc.gridx = 3; gc.gridy = row; gc.weightx = 1;
-        panel.add(spnDefaultSlideSec, gc);
 
         row++;
 
@@ -597,7 +778,7 @@ public class ColumbiaSignUI extends JFrame {
        =============================== */
     private void wireEvents() {
 
-        // Browse slide image
+        // Slides
         btnBrowseSlideImage.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Select a slide image (optional)");
@@ -613,9 +794,8 @@ public class ColumbiaSignUI extends JFrame {
             showImagePreview(f);
         });
 
-        // Add slide
         btnAddSlide.addActionListener(e -> {
-            String name = (txtSlideName.getText() == null) ? "" : txtSlideName.getText().trim();
+            String name = safeTrim(txtSlideName.getText());
             int dur = (Integer) spnSlideDuration.getValue();
             String imgPath = (txtSlideImagePath.getText() == null || txtSlideImagePath.getText().trim().isEmpty())
                     ? null : txtSlideImagePath.getText().trim();
@@ -636,7 +816,6 @@ public class ColumbiaSignUI extends JFrame {
             lblStatus.setText("Added slide.");
         });
 
-        // Move slides
         btnMoveSlideUp.addActionListener(e -> {
             int row = tblSlides.getSelectedRow();
             if (row < 0) return;
@@ -653,7 +832,6 @@ public class ColumbiaSignUI extends JFrame {
             tblSlides.getSelectionModel().setSelectionInterval(newRow, newRow);
         });
 
-        // Delete slide
         btnDeleteSlide.addActionListener(e -> {
             int row = tblSlides.getSelectedRow();
             if (row < 0) return;
@@ -661,7 +839,6 @@ public class ColumbiaSignUI extends JFrame {
             lblStatus.setText("Deleted slide.");
         });
 
-        // Slide selection -> preview
         tblSlides.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             int row = tblSlides.getSelectedRow();
@@ -685,7 +862,6 @@ public class ColumbiaSignUI extends JFrame {
             }
         });
 
-        // Rotate preview
         btnRotatePreview.addActionListener(e -> {
             if (originalPreviewImage == null) return;
             previewRotationDegrees = (previewRotationDegrees + 90) % 360;
@@ -698,102 +874,186 @@ public class ColumbiaSignUI extends JFrame {
             }
         });
 
-        /* ===============================
-           Students
-           =============================== */
-
+        // Students selection
         studentList.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             StudentDef s = studentList.getSelectedValue();
-            if (s == null) return;
-
-            txtStudentName.setText(s.getStudentName());
-            spnTripsPerWeek.setValue(s.getTripsPerWeek());
-            btnAddOrUpdateStudent.setText("Update Student");
+            onStudentSelectionChanged(s);
         });
 
-        btnClearStudentFields.addActionListener(e -> clearStudentFields());
+        arrivalsList.addListSelectionListener(e -> {
+            if (e.getValueIsAdjusting()) return;
+            btnRemoveArrival.setEnabled(arrivalsList.getSelectedIndex() >= 0 && studentList.getSelectedValue() != null);
+        });
 
-        btnAddOrUpdateStudent.addActionListener(e -> {
-            String name = (txtStudentName.getText() == null) ? "" : txtStudentName.getText().trim();
-            int trips = (Integer) spnTripsPerWeek.getValue();
-
+        // Student buttons
+        btnAddStudent.addActionListener(e -> {
+            String name = safeTrim(txtStudentName.getText());
             if (name.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Enter a student name.", "Missing Student Name", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            int selectedIdx = studentList.getSelectedIndex();
-            if (selectedIdx >= 0 && "Update Student".equals(btnAddOrUpdateStudent.getText())) {
-                StudentDef old = studentModel.get(selectedIdx);
-                old.setStudentName(name);
-                old.setTripsPerWeek(trips);
-                studentList.repaint();
-                lblStatus.setText("Updated student.");
-            } else {
-                StudentDef def = new StudentDef(nextStudentId++, name, trips);
-                studentModel.addElement(def);
-                lblStatus.setText("Added student.");
+            StudentDef def = new StudentDef(nextStudentId++, name);
+            studentModel.addElement(def);
+
+            int idx = studentModel.size() - 1;
+            studentList.setSelectedIndex(idx);
+
+            lblStatus.setText("Added student.");
+            txtStudentName.requestFocusInWindow();
+        });
+
+        btnUpdateStudent.addActionListener(e -> {
+            int idx = studentList.getSelectedIndex();
+            if (idx < 0) return;
+
+            String name = safeTrim(txtStudentName.getText());
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Enter a student name.", "Missing Student Name", JOptionPane.WARNING_MESSAGE);
+                return;
             }
 
-            clearStudentFields();
+            StudentDef s = studentModel.get(idx);
+            s.setStudentName(name);
+
+            studentList.repaint();
+            lblStatus.setText("Updated student.");
         });
 
         btnDeleteStudent.addActionListener(e -> {
             int idx = studentList.getSelectedIndex();
             if (idx < 0) return;
+
             studentModel.remove(idx);
             lblStatus.setText("Deleted student.");
+
+            arrivalsModel.clear();
+            btnAddArrival.setEnabled(false);
+            btnRemoveArrival.setEnabled(false);
+            btnUpdateStudent.setEnabled(false);
             clearStudentFields();
         });
 
-        /* ===============================
-           Save buttons (callbacks only)
-           =============================== */
+        btnClearStudentFields.addActionListener(e -> clearStudentFields());
 
-        btnSaveConfigJson.addActionListener(e -> {
-            SignConfig cfg = readConfigFromUI();
-            if (configSaveHandler != null) {
-                configSaveHandler.onSaveConfig(cfg);
-                lblStatus.setText("Config handed to JSON handler.");
-            } else {
-                lblStatus.setText("No config save handler set.");
-                txtResults.setText(
-                        "CONFIG JSON SAVE (UI-only)\n" +
-                                "Variables needed to be stored in Config JSON file are:\n" +
-                                "  - weeksToSimulate (int)\n" +
-                                "  - schoolDaysPerWeek (int)\n" +
-                                "  - dailyStartOffsetSec (int)\n" +
-                                "  - visibleMeanSec (double)\n" +
-                                "  - visibleStdDevSec (double)\n" +
-                                "  - defaultSlideSec (int)\n"
-                );
-            }
-        });
-
-        btnSaveStudentsJson.addActionListener(e -> {
-            List<StudentDef> students = snapshotStudentsFromUI();
-            if (students.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No students to save.", "Students", JOptionPane.WARNING_MESSAGE);
+        // Arrival buttons
+        btnAddArrival.addActionListener(e -> {
+            StudentDef s = studentList.getSelectedValue();
+            if (s == null) {
+                JOptionPane.showMessageDialog(this, "Select a student first.", "Arrivals", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            if (studentsSaveHandler != null) {
-                studentsSaveHandler.onSaveStudents(students);
-                lblStatus.setText("Students handed to JSON handler.");
-            } else {
-                lblStatus.setText("No students save handler set.");
-                txtResults.setText(
-                        "STUDENTS JSON SAVE (UI-only)\n" +
-                                "Variables needed to be stored in Students JSON file are:\n" +
-                                "  - studentId (int)\n" +
-                                "  - studentName (String)\n" +
-                                "  - tripsPerWeek (int)\n\n" +
-                                "Notes:\n" +
-                                "  - studentId is stable identity and should not change once assigned.\n"
-                );
+
+            String day = (String) cboArrivalDay.getSelectedItem();
+            String time = (String) cboArrivalTime.getSelectedItem();
+
+            if (day == null || day.trim().isEmpty() || time == null || time.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Select a day and time.", "Arrivals", JOptionPane.WARNING_MESSAGE);
+                return;
             }
+
+            if (s.hasArrival(day, time)) {
+                JOptionPane.showMessageDialog(this, "That arrival already exists for this student.", "Arrivals", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            s.addArrival(new ArrivalDef(day, time));
+            loadArrivalsForStudent(s);
+            studentList.repaint();
+            lblStatus.setText("Added arrival for student ID " + s.getStudentId() + ".");
         });
 
+        btnRemoveArrival.addActionListener(e -> {
+            StudentDef s = studentList.getSelectedValue();
+            if (s == null) return;
+
+            int aidx = arrivalsList.getSelectedIndex();
+            if (aidx < 0) return;
+
+            s.removeArrivalAt(aidx);
+            loadArrivalsForStudent(s);
+            studentList.repaint();
+            lblStatus.setText("Removed arrival for student ID " + s.getStudentId() + ".");
+        });
+
+        // WRITE STUDENTS JSON (console + JSON writer)
+        btnWriteStudentsJson.addActionListener(e -> {
+            List<StudentDef> students = snapshotStudentsFromUI();
+            if (students.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No students to write.", "Students", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            StudentSample.handleStudents(students);
+
+            if (studentsSaveHandler != null) {
+                studentsSaveHandler.onSaveStudents(students);
+            }
+
+            lblStatus.setText("Wrote studentData.json");
+            txtResults.setText(
+                    "STUDENTS JSON WRITE\n" +
+                            "Wrote: " + STUDENTS_JSON_FILE + "\n\n" +
+                            "Data:\n" +
+                            "  - students[]\n" +
+                            "    - studentId\n" +
+                            "    - studentName\n" +
+                            "    - arrivals[] { day, time }\n"
+            );
+        });
+
+        // Config save — WRITE configData.json (includes simulationStartTime)
+        btnSaveConfigJson.addActionListener(e -> {
+
+            String simulationStartTime = (String) cboSimulationStartTime.getSelectedItem();
+            if (simulationStartTime == null || simulationStartTime.trim().isEmpty()) {
+                simulationStartTime = "06:00";
+            }
+
+            int weeksToSimulate = (Integer) spnWeeks.getValue();
+            int schoolDaysPerWeek = (Integer) spnSchoolDaysPerWeek.getValue();
+            double visibleMeanSec = (Double) spnVisibleMean.getValue();
+            double visibleStdDevSec = (Double) spnVisibleStd.getValue();
+
+            // Your UI doesn't have controls for these yet; keep defaults consistent
+            int dailyStartOffsetSec = 60;
+            int defaultSlideSec = 20;
+
+            // Write configData.json (console + file)
+            // IMPORTANT: SampleConfig.handleConfig signature must be:
+            // handleConfig(String, int, int, int, double, double, int)
+            SampleConfig.handleConfig(
+                    simulationStartTime,
+                    weeksToSimulate,
+                    schoolDaysPerWeek,
+                    dailyStartOffsetSec,
+                    visibleMeanSec,
+                    visibleStdDevSec,
+                    defaultSlideSec
+            );
+
+            // Optional handler (legacy)
+            SignConfig cfg = new SignConfig(weeksToSimulate, schoolDaysPerWeek, visibleMeanSec, visibleStdDevSec);
+            if (configSaveHandler != null) {
+                configSaveHandler.onSaveConfig(cfg);
+            }
+
+            lblStatus.setText("Wrote configData.json");
+            txtResults.setText(
+                    "CONFIG JSON SAVE\n" +
+                            "Wrote: " + CONFIG_JSON_FILE + "\n\n" +
+                            "simulationStartTime = " + simulationStartTime + "\n" +
+                            "weeksToSimulate     = " + weeksToSimulate + "\n" +
+                            "schoolDaysPerWeek   = " + schoolDaysPerWeek + "\n" +
+                            "dailyStartOffsetSec = " + dailyStartOffsetSec + "\n" +
+                            "visibleMeanSec      = " + visibleMeanSec + "\n" +
+                            "visibleStdDevSec    = " + visibleStdDevSec + "\n" +
+                            "defaultSlideSec     = " + defaultSlideSec + "\n"
+            );
+        });
+
+        // Slides save — console + JSON writer
         btnSaveSlidesJson.addActionListener(e -> {
             List<SlideDef> slides = snapshotSlidesFromUI();
             if (slides.isEmpty()) {
@@ -804,33 +1064,28 @@ public class ColumbiaSignUI extends JFrame {
             slideTableModel.renumberOrders();
             slideTableModel.fireTableDataChanged();
 
+            SampleSlides.handleSlides(slides);
+
             if (slidesSaveHandler != null) {
                 slidesSaveHandler.onSaveSlides(slides);
-                lblStatus.setText("Slides handed to JSON handler.");
-            } else {
-                lblStatus.setText("No slides save handler set.");
-                txtResults.setText(
-                        "SLIDES JSON SAVE (UI-only)\n" +
-                                "Variables needed to be stored in Slides JSON file are:\n" +
-                                "  - slideId (int)\n" +
-                                "  - slideOrder (int)\n" +
-                                "  - slideName (String)\n" +
-                                "  - durationSeconds (int)\n" +
-                                "  - imagePath (String | null)\n\n" +
-                                "Notes:\n" +
-                                "  - slideOrder is the firing order (1..N) and changes when moved.\n" +
-                                "  - slideId is stable identity and does NOT change.\n"
-                );
             }
+
+            lblStatus.setText("Wrote slidesData.json");
+            txtResults.setText(
+                    "SLIDES JSON SAVE\n" +
+                            "Wrote: " + SLIDES_JSON_FILE + "\n\n" +
+                            "Data:\n" +
+                            "  - slides[]\n" +
+                            "    - slideId\n" +
+                            "    - slideOrder\n" +
+                            "    - slideName\n" +
+                            "    - durationSeconds\n" +
+                            "    - imagePath\n"
+            );
         });
 
-        /* ===============================
-           Simulation controls (UI-only)
-           =============================== */
-        btnRunSimulation.addActionListener(e -> {
-            lblStatus.setText("Run clicked (simulation will be wired later).");
-        });
-
+        // Simulation controls (UI-only)
+        btnRunSimulation.addActionListener(e -> lblStatus.setText("Run clicked (simulation will be wired later)."));
         btnStopRealtime.addActionListener(e -> stopRealtime());
 
         ItemListener speedEnable = e -> cboPlaybackSpeed.setEnabled(rbRealtime.isSelected());
@@ -838,8 +1093,34 @@ public class ColumbiaSignUI extends JFrame {
         rbRealtime.addItemListener(speedEnable);
         cboPlaybackSpeed.setEnabled(false);
 
-        // Make sure student name box can grab focus immediately
         SwingUtilities.invokeLater(() -> txtStudentName.requestFocusInWindow());
+    }
+
+    private void onStudentSelectionChanged(StudentDef s) {
+        boolean hasStudent = (s != null);
+
+        btnUpdateStudent.setEnabled(hasStudent);
+        btnAddArrival.setEnabled(hasStudent);
+        btnRemoveArrival.setEnabled(false);
+
+        if (!hasStudent) {
+            arrivalsModel.clear();
+            clearStudentFields();
+            return;
+        }
+
+        txtStudentName.setText(s.getStudentName());
+        loadArrivalsForStudent(s);
+    }
+
+    private void loadArrivalsForStudent(StudentDef s) {
+        arrivalsModel.clear();
+        for (ArrivalDef a : s.getArrivals()) arrivalsModel.addElement(a);
+        btnRemoveArrival.setEnabled(arrivalsList.getSelectedIndex() >= 0);
+    }
+
+    private static String safeTrim(String s) {
+        return (s == null) ? "" : s.trim();
     }
 
     /* ===============================
@@ -848,11 +1129,9 @@ public class ColumbiaSignUI extends JFrame {
     private SignConfig readConfigFromUI() {
         int weeks = (Integer) spnWeeks.getValue();
         int days = (Integer) spnSchoolDaysPerWeek.getValue();
-        int offset = (Integer) spnDailyOffset.getValue();
         double mean = (Double) spnVisibleMean.getValue();
         double std = (Double) spnVisibleStd.getValue();
-        int slideSec = (Integer) spnDefaultSlideSec.getValue();
-        return new SignConfig(weeks, days, offset, mean, std, slideSec);
+        return new SignConfig(weeks, days, mean, std);
     }
 
     private List<StudentDef> snapshotStudentsFromUI() {
@@ -867,10 +1146,141 @@ public class ColumbiaSignUI extends JFrame {
 
     private void clearStudentFields() {
         txtStudentName.setText("");
-        spnTripsPerWeek.setValue(4);
-        studentList.clearSelection();
-        btnAddOrUpdateStudent.setText("Add Student");
+        cboArrivalDay.setSelectedItem("Monday");
+        cboArrivalTime.setSelectedItem("08:00");
+        arrivalsList.clearSelection();
         txtStudentName.requestFocusInWindow();
+    }
+
+    /* ===============================
+       BLOCK A — Auto-load JSON on startup
+       =============================== */
+    private void autoLoadJsonOnStartup() {
+        boolean loadedAnything = false;
+
+        File studentsFile = new File(STUDENTS_JSON_FILE);
+        if (studentsFile.exists() && studentsFile.isFile()) {
+            if (loadStudentsFromJson(studentsFile)) loadedAnything = true;
+        }
+
+        File slidesFile = new File(SLIDES_JSON_FILE);
+        if (slidesFile.exists() && slidesFile.isFile()) {
+            if (loadSlidesFromJson(slidesFile)) loadedAnything = true;
+        }
+
+        File configFile = new File(CONFIG_JSON_FILE);
+        if (configFile.exists() && configFile.isFile()) {
+            if (loadConfigFromJson(configFile)) loadedAnything = true;
+        }
+
+        if (loadedAnything) {
+            lblStatus.setText("Loaded JSON on startup");
+        } else {
+            lblStatus.setText("No JSON files found; starting fresh");
+        }
+    }
+
+    /* ===============================
+       BLOCK B — Load Students JSON
+       =============================== */
+    private boolean loadStudentsFromJson(File f) {
+        try (FileReader r = new FileReader(f)) {
+            StudentFile data = gson.fromJson(r, StudentFile.class);
+            List<StudentDef> students = (data == null ? null : data.students);
+
+            studentModel.clear();
+            arrivalsModel.clear();
+
+            int maxId = 0;
+
+            if (students != null) {
+                for (StudentDef s : students) {
+                    if (s == null) continue;
+                    studentModel.addElement(s);
+                    if (s.getStudentId() > maxId) maxId = s.getStudentId();
+                }
+            }
+
+            nextStudentId = maxId + 1;
+            studentList.clearSelection();
+            clearStudentFields();
+
+            return true;
+        } catch (IOException ex) {
+            System.err.println("Failed to read " + f.getName() + ": " + ex.getMessage());
+            return false;
+        } catch (Exception ex) {
+            System.err.println("Invalid students JSON " + f.getName() + ": " + ex.getMessage());
+            return false;
+        }
+    }
+
+    /* ===============================
+       BLOCK C — Load Slides JSON
+       =============================== */
+    private boolean loadSlidesFromJson(File f) {
+        try (FileReader r = new FileReader(f)) {
+            SlidesFile data = gson.fromJson(r, SlidesFile.class);
+            List<SlideDef> slides = (data == null ? null : data.slides);
+
+            slideTableModel.getSlides().clear();
+
+            int maxId = 0;
+
+            if (slides != null) {
+                slideTableModel.getSlides().addAll(slides);
+                for (SlideDef s : slides) {
+                    if (s == null) continue;
+                    if (s.getSlideId() > maxId) maxId = s.getSlideId();
+                }
+            }
+
+            slideTableModel.renumberOrders();
+            slideTableModel.fireTableDataChanged();
+
+            nextSlideId = maxId + 1;
+
+            return true;
+        } catch (IOException ex) {
+            System.err.println("Failed to read " + f.getName() + ": " + ex.getMessage());
+            return false;
+        } catch (Exception ex) {
+            System.err.println("Invalid slides JSON " + f.getName() + ": " + ex.getMessage());
+            return false;
+        }
+    }
+
+    /* ===============================
+       BLOCK D — Load Config JSON
+       Applies only the controls that exist in this UI.
+       =============================== */
+    private boolean loadConfigFromJson(File f) {
+        try (FileReader r = new FileReader(f)) {
+            ConfigFile cfg = gson.fromJson(r, ConfigFile.class);
+            if (cfg == null) return false;
+
+            // NEW
+            String t = (cfg.simulationStartTime == null || cfg.simulationStartTime.trim().isEmpty())
+                    ? "06:00"
+                    : cfg.simulationStartTime.trim();
+            cboSimulationStartTime.setSelectedItem(t);
+
+            // Apply to UI spinners that exist:
+            spnWeeks.setValue(cfg.weeksToSimulate);
+            spnSchoolDaysPerWeek.setValue(cfg.schoolDaysPerWeek);
+            spnVisibleMean.setValue(cfg.visibleMeanSec);
+            spnVisibleStd.setValue(cfg.visibleStdDevSec);
+
+            // dailyStartOffsetSec + defaultSlideSec exist in file but no UI controls yet
+
+            return true;
+        } catch (IOException ex) {
+            System.err.println("Failed to read " + f.getName() + ": " + ex.getMessage());
+            return false;
+        } catch (Exception ex) {
+            System.err.println("Invalid config JSON " + f.getName() + ": " + ex.getMessage());
+            return false;
+        }
     }
 
     /* ===============================
@@ -948,7 +1358,7 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       Real-time playback (not implemented in UI-only pass)
+       Real-time playback (not implemented)
        =============================== */
     private void stopRealtime() {
         // placeholder for later

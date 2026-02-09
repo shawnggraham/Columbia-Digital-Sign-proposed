@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-02-07T09:23:07.709221246",
+  "students": [
+    {
+      "studentId": 1,
+      "studentName": "shawng",
+      "arrivals": [
+        {
+          "day": "Monday",
+          "time": "08:00"
+        },
+        {
+          "day": "Wednesday",
+          "time": "08:00"
+        }
+      ]
+    }
+  ]
+}
