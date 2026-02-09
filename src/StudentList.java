@@ -22,31 +22,36 @@ public class StudentList {
     private Node tail = null;
     private Node current = null;
 
-    public static ArrayList<String> possibleWords = new ArrayList<>();
+    public static ArrayList<String> nameRepo = new ArrayList<>();
 
     public static StudentList generateStudentList(int size) throws InterruptedException, IOException {
         StudentList list = new StudentList();
         Random random = new Random();
 
-        int studentID = 1;
+        readFile();
+
         String name = "Student";
+        int studentID = 1;
+        int arrivalTime = 8;
+        int slidesWatchedTotal = 0;
 
-        boolean slideWatched = false;
+        //new BufferedReader(new FileReader("src/first-names.txt"));
 
-        System.out.println("Generating lists of students");
-        Thread.sleep(1000);
-
-        new BufferedReader(new FileReader("src/first-names.txt"));
+        System.out.println("Generating lists of random students");
 
         while (list.size() < size){
 
+            name = nameRepo.get(random.nextInt(nameRepo.size()));
            // System.out.println("\nStudent: " + name + " ID # " + studentID + "Arrives at school @"+ arrivalTime);
-            Student student = new Student(name, studentID, 0, 0);
-            studentID++;
+            Student student = new Student(name, studentID, slidesWatchedTotal, arrivalTime);
+
             list.insert(student);
             System.out.println(student);
+
+            studentID++;
+            arrivalTime++;
         }
-        System.out.println("\nList size: " + list.size());
+        System.out.println("\nGenerated Student List size: " + list.size() + "\n");
         return list;
     }
 
@@ -110,7 +115,7 @@ public class StudentList {
                 //System.out.println(line);
                 line = reader.readLine();
                 // add it to the list of possible words, with a space for readability
-                possibleWords.add(line + " ");
+                nameRepo.add(line + " ");
             }
             // catching any errors that occur during reading
         }catch(IOException exception){
@@ -121,10 +126,38 @@ public class StudentList {
         System.out.println("\u001b[32m* Read completed with 0 errors * \u001b[0m");
     }
 
-    public void getRandomName(){
+    public static String getRandomName(){
+        readFile();
         Random random = new Random();
-        possibleWords.get(random.nextInt(possibleWords.size()));
+        return nameRepo.get(random.nextInt(nameRepo.size()));
+    }
 
+    public String getNameAndID(){
+        return getName() + " #" + getID();
+    }
+
+    public String getName(){
+        return currentStudent().name;
+    }
+
+    public int getID(){
+        return currentStudent().ID;
+    }
+
+    public int getArrivalTime(){
+        return currentStudent().arrivalTime;
+    }
+
+    public int getSlidesWatched(){
+        return currentStudent().slidesWatchedTotal;
+    }
+
+    public void setSlidesWatched(int slidesWatched){
+        currentStudent().slidesWatchedTotal += slidesWatched;
+    }
+
+    public void setDurationWatched(int durationWatched){
+        currentStudent().durationWatched += durationWatched;
     }
 }
 
