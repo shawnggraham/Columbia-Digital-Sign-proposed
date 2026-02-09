@@ -30,16 +30,21 @@ public class SlideList {
         // Creating slides, adding 20 to the circular list.
         Slide slide;
         // Storing slide names and durations
-        int slideName = 1;
-        String name = "Slide";
+        int slideID = 1;
+
+        String [] slideNames = {"Welcome", "Food", "Parking", "Fun", "Motivation", "Cafe", "Events", "Announcements", "Safety"};
+
+
 
         System.out.println("Generating lists of slides");
         Thread.sleep(1000);
         while (list.size() < size) {
-            System.out.println("\nAdding slide " + slideName);
+            System.out.println("\nAdding slide " + slideID);
             slideDuration = random.nextInt(10, 20);
-            slide = new Slide(name, slideName, slideDuration);
-            slideName++;
+            int randomSlideName = random.nextInt(slideNames.length);
+            String name = slideNames[randomSlideName];
+            slide = new Slide(name , slideID, slideDuration);
+            slideID++;
             list.insert(slide);
             System.out.println(slide);
             slideDurationTotal += slideDuration;
@@ -55,7 +60,15 @@ public class SlideList {
     }
 
     public int getSlideDuration(){
-        return slideDuration;
+        return  currentSlide().duration;
+    }
+
+    public int getSlideID() {
+        return currentSlide().ID;
+    }
+
+    public String getSlideName() {
+        return currentSlide().name;
     }
 
     // Node class
@@ -95,8 +108,10 @@ public class SlideList {
         // Checking if the list is empty, throws an IllegalStateException if it is
         if (current == null) throw new IllegalStateException("List is empty");
         // Moving the current node forward
-        Slide data = current.data;
+
         current = current.next;
+        Slide data = current.data;
+
         return data;
     }
 
