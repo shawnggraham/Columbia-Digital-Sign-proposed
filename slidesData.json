@@ -1,10 +1,36 @@
 {
-  "generatedAt": "2026-02-07T09:23:04.036187158",
+  "generatedAt": "2026-02-10T02:00:26.289194871",
   "slides": [
     {
-      "slideId": 1,
+      "slideId": 3,
       "slideOrder": 1,
       "slideName": "slide1",
+      "durationSeconds": 20,
+      "imagePath": "/home/shawng/Pictures/clandestin4.png"
+    },
+    {
+      "slideId": 2,
+      "slideOrder": 2,
+      "slideName": "slide2",
+      "durationSeconds": 20,
+      "imagePath": "/home/shawng/Pictures/clandestine/Photos-1-001/IMG_20251005_155607875_HDR.jpg"
+    },
+    {
+      "slideId": 4,
+      "slideOrder": 3,
+      "slideName": "slide3",
+      "durationSeconds": 10
+    },
+    {
+      "slideId": 5,
+      "slideOrder": 4,
+      "slideName": "slide4",
+      "durationSeconds": 10
+    },
+    {
+      "slideId": 6,
+      "slideOrder": 5,
+      "slideName": "slide5",
       "durationSeconds": 10
     }
   ]

@@ -1085,7 +1085,18 @@ public class ColumbiaSignUI extends JFrame {
         });
 
         // Simulation controls (UI-only)
-        btnRunSimulation.addActionListener(e -> lblStatus.setText("Run clicked (simulation will be wired later)."));
+        btnRunSimulation.addActionListener(e -> {
+
+            lblStatus.setText("Running simulation...");
+            txtResults.setText(
+                    "Simulation running...\n" +
+                            "See console output.\n"
+            );
+
+            // 🔥 THIS IS THE ONLY LINE THAT MATTERS
+            new SampleProcessor().run();
+        });
+
         btnStopRealtime.addActionListener(e -> stopRealtime());
 
         ItemListener speedEnable = e -> cboPlaybackSpeed.setEnabled(rbRealtime.isSelected());

@@ -1,1 +1,10 @@
-/out
+# IntelliJ / IDE files
+.idea/
+*.iml
+
+# Java build output
+/out/
+*.class
+
+# OS junk
+.DS_Store

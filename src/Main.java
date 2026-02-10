@@ -21,7 +21,7 @@ public class Main {
 
         // SlideList slideList = SlideList.generateSlideList(20);
         // StudentList studentList = StudentList.generateStudentList(10);
-
+        /*
 
         new JSONGenerator("data1.JSON");
 
@@ -42,7 +42,7 @@ public class Main {
         for (int i = 0; i < studentList.size(); i++) {
             System.out.println(studentList.next());
         }
-        /*
+
          * --------------------------------------------
          * UI ENTRY POINT
          * --------------------------------------------
