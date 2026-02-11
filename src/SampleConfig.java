@@ -1,5 +1,5 @@
 // FILE: src/SampleConfig.java
-// Purpose: Accept simulation config values and write them to configData.json using GSON.
+// Purpose: Takes config values from the UI and writes configData.json (pretty-printed) with Gson.
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,7 +11,10 @@ import java.time.LocalDateTime;
 public class SampleConfig {
 
     /* =========================================================
-       GSON + OUTPUT FILE
+       Gson + output file
+
+       Keep this simple: one Gson instance, pretty printed,
+       and one default filename for config output.
        ========================================================= */
     private static final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -20,10 +23,16 @@ public class SampleConfig {
     private static final String DEFAULT_OUTPUT_FILE = "configData.json";
 
     /* =========================================================
-       UPDATED PUBLIC ENTRYPOINT (NOW INCLUDES START TIME)
+       Main entrypoint
+
+       This is what the UI calls when you hit "Save Config JSON".
+       We do 3 things:
+         1) Print the values (so you can sanity-check them)
+         2) Wrap them into a payload object
+         3) Write configData.json
        ========================================================= */
     public static void handleConfig(
-            String simulationStartTime,   // NEW
+            String simulationStartTime,
             int weeksToSimulate,
             int schoolDaysPerWeek,
             int dailyStartOffsetSec,
@@ -56,7 +65,10 @@ public class SampleConfig {
     }
 
     /* =========================================================
-       CONSOLE OUTPUT
+       Console output
+
+       This is just a loud "here's what we're about to write"
+       so you can catch bad values before you go chasing bugs.
        ========================================================= */
     private static void printConfigToConsole(
             String simulationStartTime,
@@ -80,7 +92,10 @@ public class SampleConfig {
     }
 
     /* =========================================================
-       JSON WRITE
+       JSON write
+
+       Writes a fresh configData.json each time (overwrite).
+       If this fails, we scream about it in stderr.
        ========================================================= */
     private static void writeConfigToJsonFile(ConfigFile payload, String filename) {
 
@@ -94,7 +109,11 @@ public class SampleConfig {
     }
 
     /* =========================================================
-       CONFIG JSON WRAPPER
+       JSON payload object
+
+       This class is basically the "shape" of configData.json.
+       generatedAt is just a timestamp so you can tell when the
+       file was last written.
        ========================================================= */
     private static class ConfigFile {
 

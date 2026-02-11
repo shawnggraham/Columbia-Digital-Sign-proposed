@@ -1,6 +1,6 @@
 // FILE: src/StudentSample.java
-// Purpose: Accept students from ColumbiaSignUI and write them to a JSON file using GSON.
-// Minimal change for the team: keep console output + add JSON output (studentData.json).
+// Purpose: Takes students from the UI and writes studentData.json using Gson.
+// Also prints everything to console so you can double-check what just got saved.
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,7 +17,10 @@ import java.util.Map;
 public class StudentSample {
 
     /* =========================================================
-       BLOCK 1 — GSON + Output Filename
+       Gson + output file
+
+       One pretty-print Gson instance and one default filename.
+       Nothing complicated here.
        ========================================================= */
     private static final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -26,22 +29,30 @@ public class StudentSample {
     private static final String DEFAULT_OUTPUT_FILE = "studentData.json";
 
     /* =========================================================
-       BLOCK 2 — Public entrypoint called by UI
+       Main entrypoint (called by UI)
+
+       UI hands us the full student list.
+       We:
+         1) Print it to console (quick sanity check)
+         2) Write studentData.json
        ========================================================= */
     public static void handleStudents(List<ColumbiaSignUI.StudentDef> students) {
 
-        // Safety: avoid nulls
+        // Don’t crash on null input
         if (students == null) students = new ArrayList<>();
 
-        // Keep your console output (so you can verify quickly)
+        // Dump to console so you can verify fast
         printStudentsToConsole(students);
 
-        // Write JSON file (minimal: one file, all students)
+        // Write everything to one JSON file
         writeStudentsToJsonFile(students, DEFAULT_OUTPUT_FILE);
     }
 
     /* =========================================================
-       BLOCK 3 — Console output (matches what you showed)
+       Console output
+
+       This shows exactly what’s about to be written.
+       Helps catch missing arrivals, wrong IDs, etc.
        ========================================================= */
     private static void printStudentsToConsole(List<ColumbiaSignUI.StudentDef> students) {
 
@@ -69,7 +80,8 @@ public class StudentSample {
     }
 
     /* =========================================================
-       BLOCK 4 — JSON write (object graph as-is)
+       JSON write
+
        Output format:
        {
          "generatedAt": "...",
@@ -78,6 +90,8 @@ public class StudentSample {
            ...
          ]
        }
+
+       We wrap the list so the JSON has a clean top-level structure.
        ========================================================= */
     private static void writeStudentsToJsonFile(List<ColumbiaSignUI.StudentDef> students, String filename) {
 
@@ -93,10 +107,13 @@ public class StudentSample {
     }
 
     /* =========================================================
-       BLOCK 5 — Optional: If you want the OLD generator style
-       Map keys: "Student 1", "Student 2", etc.
-       This is NOT required, but included because your team already
-       has that pattern.
+       Optional legacy-style JSON
+
+       If you ever need the old format:
+       "Student 1", "Student 2", etc.
+
+       Not required for the new system,
+       but left here so nobody panics.
        ========================================================= */
     public static void writeStudentsAsMapJson(List<ColumbiaSignUI.StudentDef> students, String filename) {
 
@@ -123,6 +140,7 @@ public class StudentSample {
                     arrivals.add(ar);
                 }
             }
+
             one.put("arrivals", arrivals);
 
             studentsMap.put("Student " + idx, one);
@@ -141,7 +159,10 @@ public class StudentSample {
     }
 
     /* =========================================================
-       BLOCK 6 — Simple wrapper for clean JSON structure
+       JSON wrapper object
+
+       Defines the actual shape of studentData.json:
+       timestamp + list of students.
        ========================================================= */
     private static class StudentFile {
         String generatedAt;

@@ -1,6 +1,6 @@
 // FILE: src/SampleSlides.java
-// Purpose: Accept slides from ColumbiaSignUI and write them to a JSON file using GSON.
-// Minimal change: keep console output + add JSON output (slidesData.json).
+// Purpose: Takes the slide list from ColumbiaSignUI and writes slidesData.json (pretty-printed) with Gson.
+// Also prints to console so you can sanity-check what just got saved.
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -14,7 +14,10 @@ import java.util.List;
 public class SampleSlides {
 
     /* =========================================================
-       BLOCK 1 — GSON + Output Filename
+       Gson + output filename
+
+       One Gson instance (pretty printed) and one default output file.
+       Keep it dead simple.
        ========================================================= */
     private static final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -23,22 +26,30 @@ public class SampleSlides {
     private static final String DEFAULT_OUTPUT_FILE = "slidesData.json";
 
     /* =========================================================
-       BLOCK 2 — Public entrypoint called by UI
+       Main entrypoint (called by the UI)
+
+       UI hands us the slide list.
+       We do 2 things:
+         1) Print it (quick "does this look right?" check)
+         2) Write slidesData.json
        ========================================================= */
     public static void handleSlides(List<ColumbiaSignUI.SlideDef> slides) {
 
-        // Safety: avoid nulls
+        // Don't blow up on nulls
         if (slides == null) slides = new ArrayList<>();
 
-        // Keep console output (for quick verification)
+        // Quick console dump for verification
         printSlidesToConsole(slides);
 
-        // Write JSON file (minimal: one file, all slides)
+        // Write JSON file (one file, whole list)
         writeSlidesToJsonFile(slides, DEFAULT_OUTPUT_FILE);
     }
 
     /* =========================================================
-       BLOCK 3 — Console output (matches your current behavior)
+       Console output
+
+       This is the "what did we just save?" printout.
+       Helps catch bad order, wrong durations, missing image paths, etc.
        ========================================================= */
     private static void printSlidesToConsole(List<ColumbiaSignUI.SlideDef> slides) {
 
@@ -61,15 +72,15 @@ public class SampleSlides {
     }
 
     /* =========================================================
-       BLOCK 4 — JSON write (object graph as-is)
+       JSON write
+
        Output format:
        {
          "generatedAt": "...",
-         "slides": [
-           { slideId, slideOrder, slideName, durationSeconds, imagePath },
-           ...
-         ]
+         "slides": [ ... ]
        }
+
+       We wrap the list so the file has a clean top-level structure.
        ========================================================= */
     private static void writeSlidesToJsonFile(List<ColumbiaSignUI.SlideDef> slides, String filename) {
 
@@ -85,7 +96,10 @@ public class SampleSlides {
     }
 
     /* =========================================================
-       BLOCK 5 — Simple wrapper for clean JSON structure
+       JSON wrapper
+
+       This is just the "shape" of slidesData.json:
+       timestamp + slide list.
        ========================================================= */
     private static class SlidesFile {
         String generatedAt;
