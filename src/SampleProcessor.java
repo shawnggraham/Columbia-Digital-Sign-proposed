@@ -12,12 +12,11 @@ import java.util.stream.Collectors;
  * SampleProcessor
  *
  * Clean Simulation Engine
- *
- * - Monday anchored
- * - Multi-week simulation
- * - Generates playback events
- * - Generates completion report
- * - Returns unified SimulationResult object
+ * - Loads JSON state
+ * - Runs simulation
+ * - Builds playback events
+ * - Builds completion report
+ * - Returns formatted report string for UI
  */
 public class SampleProcessor {
 
@@ -39,16 +38,14 @@ public class SampleProcessor {
             "Friday", 4
     );
 
-    private final Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
-
+    private final Gson gson = new GsonBuilder().create();
     private final Random rng = new Random();
 
     /* ===============================
        JSON MODELS
        =============================== */
-    public static class ConfigFile {
+
+    private static class ConfigFile {
         String simulationStartTime;
         int weeksToSimulate;
         int schoolDaysPerWeek;
@@ -67,8 +64,30 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       PLAYBACK EVENT
+       RUNTIME MODELS
        =============================== */
+    public SimulationResult runFullSimulation() {
+
+        ConfigFile config = loadConfig();
+        List<ColumbiaSignUI.SlideDef> slides = loadSlides();
+        List<StudentArrival> arrivals = loadStudents();
+
+        if (config == null || slides == null || arrivals == null) {
+            return new SimulationResult(
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        }
+
+        List<PlaybackEvent> events =
+                generatePlaybackEvents(config, slides, arrivals);
+
+        List<SlideCompletionRecord> report =
+                generateCompletionReport(events, slides);
+
+        return new SimulationResult(events, report);
+    }
+
     public static class PlaybackEvent {
         public int weekNumber;
         public String studentName;
@@ -85,6 +104,7 @@ public class SampleProcessor {
                              int slideId,
                              String slideName,
                              int secondsToDisplay) {
+
             this.weekNumber = weekNumber;
             this.studentName = studentName;
             this.day = day;
@@ -95,9 +115,6 @@ public class SampleProcessor {
         }
     }
 
-    /* ===============================
-       COMPLETION RECORD
-       =============================== */
     public static class SlideCompletionRecord {
         public int weekNumber;
         public String studentName;
@@ -108,16 +125,13 @@ public class SampleProcessor {
                                      String studentName,
                                      String slideName,
                                      boolean fullySeen) {
+
             this.weekNumber = weekNumber;
             this.studentName = studentName;
             this.slideName = slideName;
             this.fullySeen = fullySeen;
         }
     }
-
-    /* ===============================
-       UNIFIED RESULT OBJECT
-       =============================== */
     public static class SimulationResult {
         public List<PlaybackEvent> playbackEvents;
         public List<SlideCompletionRecord> completionReport;
@@ -132,71 +146,41 @@ public class SampleProcessor {
     /* ===============================
        PUBLIC ENTRY FOR UI
        =============================== */
-    public SimulationResult runFullSimulation() {
 
-        List<PlaybackEvent> events = generatePlaybackEvents();
-        List<SlideCompletionRecord> report =
-                generateCompletionReport(events);
-
-        return new SimulationResult(events, report);
-    }
-
-    /* ===============================
-       ANALYTICAL MODE (Console)
-       =============================== */
-    public void run() {
-
-        SimulationResult result = runFullSimulation();
-
-        System.out.println("=== PLAYBACK EVENTS ===");
-
-        for (PlaybackEvent e : result.playbackEvents) {
-            System.out.println(
-                    "Week " + e.weekNumber + " " +
-                            e.day + " " +
-                            e.arrivalTime.format(TIME_FMT) +
-                            " — " +
-                            e.studentName +
-                            " saw \"" +
-                            e.slideName +
-                            "\" for " +
-                            e.secondsToDisplay +
-                            "s"
-            );
-        }
-
-        System.out.println("\n=== COMPLETION REPORT ===");
-
-        for (SlideCompletionRecord r : result.completionReport) {
-            System.out.println(
-                    "Week " + r.weekNumber +
-                            " — " + r.studentName +
-                            " — " + r.slideName +
-                            " — " +
-                            (r.fullySeen ? "FULL" : "PARTIAL")
-            );
-        }
-    }
-
-    /* ===============================
-       PLAYBACK GENERATION
-       =============================== */
-    private List<PlaybackEvent> generatePlaybackEvents() {
+    public String runAndReturnReport() {
 
         ConfigFile config = loadConfig();
         List<ColumbiaSignUI.SlideDef> slides = loadSlides();
         List<StudentArrival> arrivals = loadStudents();
 
         if (config == null || slides == null || arrivals == null)
-            return Collections.emptyList();
+            return "Simulation failed: missing JSON data.";
+
+        List<PlaybackEvent> events =
+                generatePlaybackEvents(config, slides, arrivals);
+
+        List<SlideCompletionRecord> report =
+                generateCompletionReport(events, slides);
+
+        return formatReport(events, report);
+    }
+
+    /* ===============================
+       PLAYBACK GENERATION
+       =============================== */
+
+    private List<PlaybackEvent> generatePlaybackEvents(
+            ConfigFile config,
+            List<ColumbiaSignUI.SlideDef> slides,
+            List<StudentArrival> arrivals) {
+
+        List<PlaybackEvent> events = new ArrayList<>();
 
         LocalTime simStart =
                 LocalTime.parse(config.simulationStartTime, TIME_FMT);
 
         int mean = (int) config.visibleMeanSec;
         int std  = (int) config.visibleStdDevSec;
-
-        List<PlaybackEvent> events = new ArrayList<>();
 
         for (int week = 1; week <= config.weeksToSimulate; week++) {
 
@@ -225,18 +209,19 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       COMPLETION REPORT (USES EVENTS)
+       COMPLETION REPORT
        =============================== */
-    public List<SlideCompletionRecord> generateCompletionReport(
-            List<PlaybackEvent> events) {
+
+    private List<SlideCompletionRecord> generateCompletionReport(
+            List<PlaybackEvent> events,
+            List<ColumbiaSignUI.SlideDef> slides) {
 
         List<SlideCompletionRecord> report = new ArrayList<>();
-        if (events.isEmpty()) return report;
 
         Map<String, Integer> accumulation = new HashMap<>();
 
         Map<String, Integer> slideDurations =
-                loadSlides().stream()
+                slides.stream()
                         .collect(Collectors.toMap(
                                 ColumbiaSignUI.SlideDef::getSlideName,
                                 ColumbiaSignUI.SlideDef::getDurationSeconds
@@ -274,21 +259,68 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       ARRIVAL MODEL
+       REPORT FORMATTER
        =============================== */
+
+    private String formatReport(List<PlaybackEvent> events,
+                                List<SlideCompletionRecord> report) {
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("=== PLAYBACK EVENTS ===\n\n");
+
+        for (PlaybackEvent e : events) {
+
+            sb.append(
+                    "Week " + e.weekNumber + " " +
+                            e.day + " " +
+                            e.arrivalTime.format(TIME_FMT) +
+                            " — " +
+                            e.studentName +
+                            " saw \"" +
+                            e.slideName +
+                            "\" for " +
+                            e.secondsToDisplay +
+                            "s\n"
+            );
+        }
+
+        sb.append("\n=== COMPLETION REPORT ===\n\n");
+
+        for (SlideCompletionRecord r : report) {
+
+            sb.append(
+                    "Week " + r.weekNumber +
+                            " — " + r.studentName +
+                            " — " + r.slideName +
+                            " — " +
+                            (r.fullySeen ? "FULL" : "PARTIAL") +
+                            "\n"
+            );
+        }
+
+        return sb.toString();
+    }
+
+    /* ===============================
+       STUDENT ARRIVAL MODEL
+       =============================== */
+
     private static class StudentArrival {
-        int studentId;
         String studentName;
         String day;
         LocalTime arrivalTime;
 
-        StudentArrival(int id, String name, String day, LocalTime time) {
-            this.studentId = id;
+        StudentArrival(String name, String day, LocalTime time) {
             this.studentName = name;
             this.day = day;
             this.arrivalTime = time;
         }
     }
+
+    /* ===============================
+       JSON LOADERS
+       =============================== */
 
     private List<StudentArrival> loadStudents() {
 
@@ -307,7 +339,6 @@ public class SampleProcessor {
                             base.plusMinutes(rng.nextInt(11) - 5);
 
                     out.add(new StudentArrival(
-                            s.getStudentId(),
                             s.getStudentName(),
                             a.getDay(),
                             randomized
@@ -330,26 +361,36 @@ public class SampleProcessor {
     }
 
     private List<ColumbiaSignUI.SlideDef> loadSlides() {
+
         try (FileReader r = new FileReader(SLIDES_JSON_FILE)) {
+
             SlidesFile data = gson.fromJson(r, SlidesFile.class);
+
             data.slides.sort(
                     Comparator.comparingInt(
                             ColumbiaSignUI.SlideDef::getSlideOrder
                     )
             );
+
             return data.slides;
+
         } catch (Exception ex) {
             return null;
         }
     }
 
     private ConfigFile loadConfig() {
+
         try (FileReader r = new FileReader(CONFIG_JSON_FILE)) {
             return gson.fromJson(r, ConfigFile.class);
         } catch (Exception ex) {
             return null;
         }
     }
+
+    /* ===============================
+       CORE PLAYBACK COMPUTATION
+       =============================== */
 
     private List<PlaybackEvent> computePlaybackForStudent(
             LocalTime simStart,
@@ -385,12 +426,15 @@ public class SampleProcessor {
         int acc = 0;
 
         for (int i = 0; i < slides.size(); i++) {
+
             int dur = slides.get(i).getDurationSeconds();
+
             if (cycleOffset < acc + dur) {
                 slideIndex = i;
                 offsetIntoSlide = cycleOffset - acc;
                 break;
             }
+
             acc += dur;
         }
 
@@ -398,8 +442,7 @@ public class SampleProcessor {
 
         while (remaining > 0) {
 
-            ColumbiaSignUI.SlideDef slide =
-                    slides.get(slideIndex);
+            var slide = slides.get(slideIndex);
 
             int secondsLeft =
                     slide.getDurationSeconds() - offsetIntoSlide;

@@ -89,16 +89,27 @@ public class ColumbiaSignUI extends JFrame {
         private String slideName;
         private int durationSeconds;
         private String imagePath;
+        private int rotationDegrees;
 
         // Needed for Gson
         public SlideDef() { }
 
-        public SlideDef(int slideId, int slideOrder, String slideName, int durationSeconds, String imagePath) {
+        public SlideDef(int slideId, int slideOrder, String slideName,
+                        int durationSeconds, String imagePath) {
+
             this.slideId = slideId;
             this.slideOrder = slideOrder;
             this.slideName = slideName;
             this.durationSeconds = durationSeconds;
             this.imagePath = imagePath;
+            this.rotationDegrees = 0;
+        }
+        public int getRotationDegrees() {
+            return rotationDegrees;
+        }
+
+        public void setRotationDegrees(int rotationDegrees) {
+            this.rotationDegrees = rotationDegrees;
         }
 
         public int getSlideId() { return slideId; }
@@ -294,6 +305,7 @@ public class ColumbiaSignUI extends JFrame {
        =============================== */
     private javax.swing.Timer playbackTimer;
     private List<SampleProcessor.PlaybackEvent> playbackEvents;
+    private SampleProcessor.SimulationResult currentResult;
     private int playbackEventIndex = 0;
     private double playbackSpeedMultiplier = 1.0;
     /* ===============================
@@ -877,6 +889,7 @@ public class ColumbiaSignUI extends JFrame {
             int row = tblSlides.getSelectedRow();
             SlideDef s = slideTableModel.getAt(row);
             if (s == null) return;
+            previewRotationDegrees = s.getRotationDegrees();
 
             if (s.getImagePath() != null) {
                 File f = new File(s.getImagePath());
@@ -896,10 +909,22 @@ public class ColumbiaSignUI extends JFrame {
         });
 
         btnRotatePreview.addActionListener(e -> {
+
             if (originalPreviewImage == null) return;
+
             previewRotationDegrees = (previewRotationDegrees + 90) % 360;
+
+            int row = tblSlides.getSelectedRow();
+            if (row >= 0) {
+                SlideDef s = slideTableModel.getAt(row);
+                if (s != null) {
+                    s.setRotationDegrees(previewRotationDegrees);
+                }
+            }
+
             renderPreviewScaledAndRotated();
         });
+
 
         lblPreview.addComponentListener(new ComponentAdapter() {
             @Override public void componentResized(ComponentEvent e) {
@@ -1121,72 +1146,18 @@ public class ColumbiaSignUI extends JFrame {
         btnRunSimulation.addActionListener(e -> {
 
             SampleProcessor processor = new SampleProcessor();
-            SampleProcessor.SimulationResult result =
-                    processor.runFullSimulation();
-
-            txtResults.setText("");
 
             if (rbFast.isSelected()) {
 
-                // Show playback slice logs
-                for (var event : result.playbackEvents) {
-
-                    txtResults.append(
-                            "Week " + event.weekNumber + " " +
-                                    event.day + " " +
-                                    event.arrivalTime.format(
-                                            java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
-                                    " — " +
-                                    event.studentName +
-                                    " saw \"" +
-                                    event.slideName +
-                                    "\" for " +
-                                    event.secondsToDisplay +
-                                    "s\n"
-                    );
-                }
-
-                // Show completion summary
-                txtResults.append("\n=== SUMMARY BY STUDENT (FULL ONLY) ===\n");
-
-                java.util.Map<String, java.util.List<String>> summary =
-                        new java.util.LinkedHashMap<>();
-
-                for (var r : result.completionReport) {
-
-                    if (!r.fullySeen) continue;
-
-                    String key = "Week " + r.weekNumber + " — " + r.studentName;
-
-                    summary.computeIfAbsent(key,
-                                    k -> new java.util.ArrayList<>())
-                            .add(r.slideName);
-                }
-
-                for (String key : summary.keySet()) {
-
-                    java.util.List<String> slides = summary.get(key);
-
-                    txtResults.append(
-                            key + " fully saw: " +
-                                    String.join(", ", slides) + "\n"
-                    );
-                }
-
-                lblStatus.setText("Analytical simulation complete.");
+                String report = processor.runAndReturnReport();
+                txtResults.setText(report);
+                lblStatus.setText("Simulation complete.");
             }
             else {
 
-                // Get selected playback speed
-                String speed = (String) cboPlaybackSpeed.getSelectedItem();
-                if (speed != null && speed.endsWith("x")) {
-                    playbackSpeedMultiplier =
-                            Double.parseDouble(speed.replace("x", ""));
-                } else {
-                    playbackSpeedMultiplier = 1.0;
-                }
-
-                playbackEvents = result.playbackEvents;
+                // Keep your real-time branch exactly as it was
+                currentResult = processor.runFullSimulation();
+                playbackEvents = currentResult.playbackEvents;
                 playbackEventIndex = 0;
 
                 btnRunSimulation.setEnabled(false);
@@ -1194,7 +1165,6 @@ public class ColumbiaSignUI extends JFrame {
 
                 startRealtimePlayback();
             }
-
         });
 
 
@@ -1411,7 +1381,7 @@ public class ColumbiaSignUI extends JFrame {
         }
 
         originalPreviewImage = icon.getImage();
-        previewRotationDegrees = 0;
+//        previewRotationDegrees = 0;
         renderPreviewScaledAndRotated();
     }
 
@@ -1473,9 +1443,19 @@ public class ColumbiaSignUI extends JFrame {
    =============================== */
 
     private void startRealtimePlayback() {
+
+        // Recalculate playback speed every time playback starts
+        String speed = (String) cboPlaybackSpeed.getSelectedItem();
+
+        if (speed != null && speed.endsWith("x")) {
+            playbackSpeedMultiplier =
+                    Double.parseDouble(speed.replace("x", ""));
+        } else {
+            playbackSpeedMultiplier = 1.0;
+        }
+
         playNextEvent();
     }
-
     private void playNextEvent() {
 
         if (playbackEventIndex >= playbackEvents.size()) {
@@ -1485,7 +1465,7 @@ public class ColumbiaSignUI extends JFrame {
             txtResults.append("\n=== SUMMARY BY STUDENT (FULL ONLY) ===\n");
 
             SampleProcessor processor = new SampleProcessor();
-            var report = processor.generateCompletionReport(playbackEvents);
+            var report = currentResult.completionReport;
 
             java.util.Map<String, java.util.List<String>> summary =
                     new java.util.LinkedHashMap<>();
@@ -1566,6 +1546,7 @@ public class ColumbiaSignUI extends JFrame {
         for (SlideDef s : slideTableModel.getSlides()) {
 
             if (s.getSlideId() == slideId) {
+                previewRotationDegrees = s.getRotationDegrees();
 
                 if (s.getImagePath() != null) {
                     File f = new File(s.getImagePath());

@@ -1,33 +1,37 @@
 {
-  "generatedAt": "2026-02-10T15:52:24.799816552",
+  "generatedAt": "2026-02-10T19:47:50.963818314",
   "slides": [
     {
       "slideId": 11,
       "slideOrder": 1,
       "slideName": "slide1",
       "durationSeconds": 10,
-      "imagePath": "slide-images/clandestin4.png"
+      "imagePath": "slide-images/clandestin4.png",
+      "rotationDegrees": 0
     },
     {
       "slideId": 12,
       "slideOrder": 2,
       "slideName": "slide2",
       "durationSeconds": 10,
-      "imagePath": "slide-images/emily.jpg"
+      "imagePath": "slide-images/emily.jpg",
+      "rotationDegrees": 0
     },
     {
       "slideId": 13,
       "slideOrder": 3,
       "slideName": "slide3",
       "durationSeconds": 10,
-      "imagePath": "slide-images/couldnt-find-a-sitter.jpg"
+      "imagePath": "slide-images/couldnt-find-a-sitter.jpg",
+      "rotationDegrees": 0
     },
     {
       "slideId": 14,
       "slideOrder": 4,
       "slideName": "slide4",
       "durationSeconds": 10,
-      "imagePath": "slide-images/2b4ab976-5aa4-40a5-9a38-51bc0fd406bc.jpg"
+      "imagePath": "slide-images/2b4ab976-5aa4-40a5-9a38-51bc0fd406bc.jpg",
+      "rotationDegrees": 90
     }
   ]
 }
