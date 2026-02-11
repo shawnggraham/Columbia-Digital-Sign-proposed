@@ -1,36 +1,36 @@
 {
-  "generatedAt": "2026-02-10T21:37:57.768743331",
+  "generatedAt": "2026-02-11T11:36:38.437374976",
   "slides": [
     {
-      "slideId": 15,
+      "slideId": 27,
       "slideOrder": 1,
-      "slideName": "Clandestine",
-      "durationSeconds": 10,
-      "imagePath": "slide-images/IMG_20251020_105249357_HDR.jpg",
-      "rotationDegrees": 90
-    },
-    {
-      "slideId": 14,
-      "slideOrder": 2,
-      "slideName": "slide4",
-      "durationSeconds": 10,
+      "slideName": "nic",
+      "durationSeconds": 15,
       "imagePath": "slide-images/2b4ab976-5aa4-40a5-9a38-51bc0fd406bc.jpg",
       "rotationDegrees": 90
     },
     {
-      "slideId": 11,
-      "slideOrder": 3,
-      "slideName": "slide1",
-      "durationSeconds": 10,
-      "imagePath": "slide-images/clandestin4.png",
+      "slideId": 28,
+      "slideOrder": 2,
+      "slideName": "emily",
+      "durationSeconds": 20,
+      "imagePath": "slide-images/emily.jpg",
       "rotationDegrees": 0
     },
     {
-      "slideId": 12,
+      "slideId": 30,
+      "slideOrder": 3,
+      "slideName": "Boat",
+      "durationSeconds": 20,
+      "imagePath": "slide-images/IMG_20251020_105249357_HDR.jpg",
+      "rotationDegrees": 90
+    },
+    {
+      "slideId": 31,
       "slideOrder": 4,
-      "slideName": "slide2",
-      "durationSeconds": 10,
-      "imagePath": "slide-images/emily.jpg",
+      "slideName": "Rocinante",
+      "durationSeconds": 30,
+      "imagePath": "slide-images/rocinante2.jpg",
       "rotationDegrees": 0
     }
   ]

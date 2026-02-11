@@ -68,7 +68,7 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
 
         // NEW
         String simulationStartTime;
-
+        int arrivalRandomMinutes;   // NEW
         int weeksToSimulate;
         int schoolDaysPerWeek;
         int dailyStartOffsetSec;
@@ -281,6 +281,7 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
        UI: Config (Right-Top)
        =============================== */
     private JComboBox<String> cboSimulationStartTime; // NEW
+    private JSpinner spnArrivalRandomMinutes;   // NEW
     private JSpinner spnWeeks;
     private JSpinner spnSchoolDaysPerWeek;
     private JSpinner spnVisibleMean;
@@ -663,7 +664,7 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
 
         int row = 0;
 
-        // NEW: Simulation Start Time (top)
+// Simulation Start Time
         gc.gridx = 0; gc.gridy = row; gc.weightx = 0;
         panel.add(new JLabel("Simulation Start Time:"), gc);
 
@@ -673,13 +674,18 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
         gc.gridx = 1; gc.gridy = row; gc.weightx = 1;
         panel.add(cboSimulationStartTime, gc);
 
+// NEW: Arrival Randomization Spinner
         gc.gridx = 2; gc.gridy = row; gc.weightx = 0;
-        panel.add(new JLabel(""), gc);
+        panel.add(new JLabel("Arrival ± (min):"), gc);
+
+        spnArrivalRandomMinutes =
+                new JSpinner(new SpinnerNumberModel(5, 0, 60, 1));
 
         gc.gridx = 3; gc.gridy = row; gc.weightx = 1;
-        panel.add(new JLabel(""), gc);
+        panel.add(spnArrivalRandomMinutes, gc);
 
         row++;
+
 
         gc.gridx = 0; gc.gridy = row; gc.weightx = 0;
         panel.add(new JLabel("Weeks to Simulate:"), gc);
@@ -830,7 +836,7 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
 
                 // Store RELATIVE path, not absolute
                 txtSlideImagePath.setText(dest.getPath());
-
+                previewRotationDegrees = 0;
                 showImagePreview(dest);
 
                 lblStatus.setText("Image copied to " + IMAGE_FOLDER + "/");
@@ -1075,6 +1081,7 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
             }
 
             int weeksToSimulate = (Integer) spnWeeks.getValue();
+            int arrivalRandomMinutes = (Integer) spnArrivalRandomMinutes.getValue();
             int schoolDaysPerWeek = (Integer) spnSchoolDaysPerWeek.getValue();
             double visibleMeanSec = (Double) spnVisibleMean.getValue();
             double visibleStdDevSec = (Double) spnVisibleStd.getValue();
@@ -1088,6 +1095,7 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
             // handleConfig(String, int, int, int, double, double, int)
             SampleConfig.handleConfig(
                     simulationStartTime,
+                    arrivalRandomMinutes,   // NEW
                     weeksToSimulate,
                     schoolDaysPerWeek,
                     dailyStartOffsetSec,
@@ -1354,6 +1362,11 @@ And we use Gson to pretty-print everything nicely when we write stuff out.
                     ? "06:00"
                     : cfg.simulationStartTime.trim();
             cboSimulationStartTime.setSelectedItem(t);
+            spnArrivalRandomMinutes.setValue(
+                    cfg.arrivalRandomMinutes > 0
+                            ? cfg.arrivalRandomMinutes
+                            : 5
+            );
 
             // Apply to UI spinners that exist:
             spnWeeks.setValue(cfg.weeksToSimulate);

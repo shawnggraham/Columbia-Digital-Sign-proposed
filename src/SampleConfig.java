@@ -33,6 +33,7 @@ public class SampleConfig {
        ========================================================= */
     public static void handleConfig(
             String simulationStartTime,
+            int arrivalRandomMinutes,      // NEW
             int weeksToSimulate,
             int schoolDaysPerWeek,
             int dailyStartOffsetSec,
@@ -53,6 +54,7 @@ public class SampleConfig {
 
         ConfigFile payload = new ConfigFile(
                 simulationStartTime,
+                arrivalRandomMinutes,   // NEW
                 weeksToSimulate,
                 schoolDaysPerWeek,
                 dailyStartOffsetSec,
@@ -120,6 +122,7 @@ public class SampleConfig {
         String generatedAt;
 
         String simulationStartTime;
+        int arrivalRandomMinutes;
         int weeksToSimulate;
         int schoolDaysPerWeek;
         int dailyStartOffsetSec;
@@ -129,6 +132,7 @@ public class SampleConfig {
 
         ConfigFile(
                 String simulationStartTime,
+                int arrivalRandomMinutes,   // NEW
                 int weeksToSimulate,
                 int schoolDaysPerWeek,
                 int dailyStartOffsetSec,
@@ -138,6 +142,7 @@ public class SampleConfig {
         ) {
             this.generatedAt = LocalDateTime.now().toString();
             this.simulationStartTime = simulationStartTime;
+            this.arrivalRandomMinutes = arrivalRandomMinutes;
             this.weeksToSimulate = weeksToSimulate;
             this.schoolDaysPerWeek = schoolDaysPerWeek;
             this.dailyStartOffsetSec = dailyStartOffsetSec;

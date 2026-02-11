@@ -1,10 +1,11 @@
 {
-  "generatedAt": "2026-02-10T21:23:44.369105945",
-  "simulationStartTime": "06:00",
+  "generatedAt": "2026-02-11T10:33:41.258278941",
+  "simulationStartTime": "00:00",
+  "arrivalRandomMinutes": 10,
   "weeksToSimulate": 1,
   "schoolDaysPerWeek": 5,
   "dailyStartOffsetSec": 60,
-  "visibleMeanSec": 30.0,
-  "visibleStdDevSec": 10.0,
+  "visibleMeanSec": 25.0,
+  "visibleStdDevSec": 0.0,
   "defaultSlideSec": 20
 }
