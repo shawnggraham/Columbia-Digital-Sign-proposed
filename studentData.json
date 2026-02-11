@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-11T10:32:21.291234015",
+  "generatedAt": "2026-02-11T12:01:34.397625969",
   "students": [
     {
       "studentId": 1,
@@ -12,6 +12,10 @@
         {
           "day": "Tuesday",
           "time": "09:00"
+        },
+        {
+          "day": "Monday",
+          "time": "16:00"
         }
       ]
     }

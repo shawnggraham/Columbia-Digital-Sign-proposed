@@ -8,27 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/*
-=============================================================
-SampleProcessor
-
-This is the simulation engine.
-UI feeds it JSON. It loads everything, runs the math,
-builds playback events, builds the completion report,
-and hands a formatted string back to the UI.
-
-No Swing junk in here. Just logic.
-=============================================================
-*/
-
 public class SampleProcessor {
-
-    /* ===============================
-       JSON FILE LOCATIONS
-
-       These are the three files we depend on.
-       If one is missing, simulation doesn't run.
-    =============================== */
 
     private static final String CONFIG_JSON_FILE   = "configData.json";
     private static final String SLIDES_JSON_FILE   = "slidesData.json";
@@ -37,12 +17,6 @@ public class SampleProcessor {
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("HH:mm");
 
-    /*
-       Day name → numeric index
-       Used for sorting and calculating offsets.
-       If someone fat-fingers a day name,
-       it'll default to the bottom.
-    */
     private static final Map<String, Integer> DAY_INDEX = Map.of(
             "Monday", 0,
             "Tuesday", 1,
@@ -56,13 +30,11 @@ public class SampleProcessor {
 
     /* ===============================
        JSON STRUCTURE MODELS
-
-       These match the exact structure of the JSON files.
-       Nothing fancy — just data containers.
     =============================== */
 
     private static class ConfigFile {
         String simulationStartTime;
+        int arrivalRandomMinutes;
         int weeksToSimulate;
         int schoolDaysPerWeek;
         int dailyStartOffsetSec;
@@ -80,19 +52,16 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       MAIN SIMULATION ENTRY
-
-       This runs the full engine and returns
-       both playback events and the completion report.
+       PUBLIC ENTRY POINTS
     =============================== */
 
     public SimulationResult runFullSimulation() {
 
         ConfigFile config = loadConfig();
         List<ColumbiaSignUI.SlideDef> slides = loadSlides();
-        List<StudentArrival> arrivals = loadStudents();
+        List<StudentArrival> arrivals = loadStudents(config);
 
-        if (config == null || slides == null || arrivals == null) {
+        if (config == null || slides == null || arrivals == null || slides.isEmpty()) {
             return new SimulationResult(
                     Collections.emptyList(),
                     Collections.emptyList()
@@ -108,10 +77,26 @@ public class SampleProcessor {
         return new SimulationResult(events, report);
     }
 
-    /* ===============================
-       PLAYBACK EVENT MODEL
+    public String runAndReturnReport() {
 
-       One student seeing one slide for X seconds.
+        ConfigFile config = loadConfig();
+        List<ColumbiaSignUI.SlideDef> slides = loadSlides();
+        List<StudentArrival> arrivals = loadStudents(config);
+
+        if (config == null || slides == null || arrivals == null || slides.isEmpty())
+            return "Simulation failed: missing or invalid JSON data.";
+
+        List<PlaybackEvent> events =
+                generatePlaybackEvents(config, slides, arrivals);
+
+        List<SlideCompletionRecord> report =
+                generateCompletionReport(events, slides);
+
+        return formatReport(events, report);
+    }
+
+    /* ===============================
+       PLAYBACK MODELS
     =============================== */
 
     public static class PlaybackEvent {
@@ -141,13 +126,6 @@ public class SampleProcessor {
         }
     }
 
-    /* ===============================
-       COMPLETION RECORD
-
-       Did the student see the full slide?
-       That's all we care about here.
-    =============================== */
-
     public static class SlideCompletionRecord {
         public int weekNumber;
         public String studentName;
@@ -166,14 +144,6 @@ public class SampleProcessor {
         }
     }
 
-    /* ===============================
-       WRAPPED SIMULATION RESULT
-
-       Holds:
-       - playback events
-       - completion report
-    =============================== */
-
     public static class SimulationResult {
         public List<PlaybackEvent> playbackEvents;
         public List<SlideCompletionRecord> completionReport;
@@ -186,35 +156,108 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       PUBLIC ENTRY FOR UI
-
-       UI calls this when it just wants
-       a formatted text report.
+       ARRIVAL MODEL
     =============================== */
 
-    public String runAndReturnReport() {
+    private static class StudentArrival {
+        String studentName;
+        String day;
+        LocalTime arrivalTime;
 
-        ConfigFile config = loadConfig();
-        List<ColumbiaSignUI.SlideDef> slides = loadSlides();
-        List<StudentArrival> arrivals = loadStudents();
+        StudentArrival(String name, String day, LocalTime time) {
+            this.studentName = name;
+            this.day = day;
+            this.arrivalTime = time;
+        }
+    }
 
-        if (config == null || slides == null || arrivals == null)
-            return "Simulation failed: missing JSON data.";
+    /* ===============================
+       JSON LOADERS
+    =============================== */
 
-        List<PlaybackEvent> events =
-                generatePlaybackEvents(config, slides, arrivals);
+    private List<StudentArrival> loadStudents(ConfigFile config) {
 
-        List<SlideCompletionRecord> report =
-                generateCompletionReport(events, slides);
+        try (FileReader r = new FileReader(STUDENTS_JSON_FILE)) {
 
-        return formatReport(events, report);
+            StudentFile data = gson.fromJson(r, StudentFile.class);
+            if (data == null || data.students == null) return null;
+
+            List<StudentArrival> out = new ArrayList<>();
+
+            LocalTime simStart =
+                    LocalTime.parse(config.simulationStartTime, TIME_FMT);
+
+            int variance = Math.max(0, config.arrivalRandomMinutes);
+
+            for (var s : data.students) {
+                for (var a : s.getArrivals()) {
+
+                    LocalTime base =
+                            LocalTime.parse(a.getTime(), TIME_FMT);
+
+                    int offset =
+                            rng.nextInt(variance * 2 + 1) - variance;
+
+                    LocalTime randomized =
+                            base.plusMinutes(offset);
+
+                    if (randomized.isBefore(simStart)) {
+                        randomized = simStart;
+                    }
+
+                    out.add(new StudentArrival(
+                            s.getStudentName(),
+                            a.getDay(),
+                            randomized
+                    ));
+                }
+            }
+
+            out.sort(
+                    Comparator
+                            .comparing((StudentArrival a) ->
+                                    DAY_INDEX.getOrDefault(a.day, 99))
+                            .thenComparing(a -> a.arrivalTime)
+            );
+
+            return out;
+
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private List<ColumbiaSignUI.SlideDef> loadSlides() {
+
+        try (FileReader r = new FileReader(SLIDES_JSON_FILE)) {
+
+            SlidesFile data = gson.fromJson(r, SlidesFile.class);
+            if (data == null || data.slides == null) return null;
+
+            data.slides.sort(
+                    Comparator.comparingInt(
+                            ColumbiaSignUI.SlideDef::getSlideOrder
+                    )
+            );
+
+            return data.slides;
+
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private ConfigFile loadConfig() {
+
+        try (FileReader r = new FileReader(CONFIG_JSON_FILE)) {
+            return gson.fromJson(r, ConfigFile.class);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     /* ===============================
        PLAYBACK GENERATION
-
-       This builds every event:
-       week → student → visibility window → slide segments
     =============================== */
 
     private List<PlaybackEvent> generatePlaybackEvents(
@@ -255,13 +298,6 @@ public class SampleProcessor {
 
         return events;
     }
-
-    /* ===============================
-       COMPLETION LOGIC
-
-       Adds up how many seconds a student saw each slide.
-       If total >= slide duration → FULL.
-    =============================== */
 
     private List<SlideCompletionRecord> generateCompletionReport(
             List<PlaybackEvent> events,
@@ -308,12 +344,6 @@ public class SampleProcessor {
         return report;
     }
 
-    /* ===============================
-       REPORT FORMATTER
-
-       Builds a clean text block for UI display.
-    =============================== */
-
     private String formatReport(List<PlaybackEvent> events,
                                 List<SlideCompletionRecord> report) {
 
@@ -354,108 +384,6 @@ public class SampleProcessor {
         return sb.toString();
     }
 
-    /* ===============================
-       INTERNAL STUDENT ARRIVAL MODEL
-
-       Flattened version of student + arrival.
-       Makes simulation simpler to process.
-    =============================== */
-
-    private static class StudentArrival {
-        String studentName;
-        String day;
-        LocalTime arrivalTime;
-
-        StudentArrival(String name, String day, LocalTime time) {
-            this.studentName = name;
-            this.day = day;
-            this.arrivalTime = time;
-        }
-    }
-
-    /* ===============================
-       JSON LOADERS
-
-       These read the files and convert them
-       into runtime models.
-       If something breaks, we return null.
-    =============================== */
-
-    private List<StudentArrival> loadStudents() {
-
-        try (FileReader r = new FileReader(STUDENTS_JSON_FILE)) {
-
-            StudentFile data = gson.fromJson(r, StudentFile.class);
-            List<StudentArrival> out = new ArrayList<>();
-
-            for (var s : data.students) {
-                for (var a : s.getArrivals()) {
-
-                    LocalTime base =
-                            LocalTime.parse(a.getTime(), TIME_FMT);
-
-                    // Randomize arrival ±5 minutes
-                    LocalTime randomized =
-                            base.plusMinutes(rng.nextInt(11) - 5);
-
-                    out.add(new StudentArrival(
-                            s.getStudentName(),
-                            a.getDay(),
-                            randomized
-                    ));
-                }
-            }
-
-            out.sort(
-                    Comparator
-                            .comparing((StudentArrival a) ->
-                                    DAY_INDEX.getOrDefault(a.day, 99))
-                            .thenComparing(a -> a.arrivalTime)
-            );
-
-            return out;
-
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    private List<ColumbiaSignUI.SlideDef> loadSlides() {
-
-        try (FileReader r = new FileReader(SLIDES_JSON_FILE)) {
-
-            SlidesFile data = gson.fromJson(r, SlidesFile.class);
-
-            data.slides.sort(
-                    Comparator.comparingInt(
-                            ColumbiaSignUI.SlideDef::getSlideOrder
-                    )
-            );
-
-            return data.slides;
-
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    private ConfigFile loadConfig() {
-
-        try (FileReader r = new FileReader(CONFIG_JSON_FILE)) {
-            return gson.fromJson(r, ConfigFile.class);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    /* ===============================
-       CORE PLAYBACK MATH
-
-       This is where the real timing math happens.
-       Calculates where in the slide cycle the student lands,
-       then splits visibility across slides as needed.
-    =============================== */
-
     private List<PlaybackEvent> computePlaybackForStudent(
             LocalTime simStart,
             List<ColumbiaSignUI.SlideDef> slides,
@@ -469,6 +397,8 @@ public class SampleProcessor {
         int cycleSeconds = slides.stream()
                 .mapToInt(ColumbiaSignUI.SlideDef::getDurationSeconds)
                 .sum();
+
+        if (cycleSeconds == 0) return out;
 
         int dayOffset = DAY_INDEX.getOrDefault(a.day, 0);
         int secondsInDay = 86400;
