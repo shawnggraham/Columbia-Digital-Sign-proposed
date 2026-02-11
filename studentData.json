@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-10T13:34:41.848827293",
+  "generatedAt": "2026-02-10T17:37:31.056350516",
   "students": [
     {
       "studentId": 1,
@@ -8,6 +8,24 @@
         {
           "day": "Monday",
           "time": "08:00"
+        },
+        {
+          "day": "Wednesday",
+          "time": "12:45"
+        }
+      ]
+    },
+    {
+      "studentId": 2,
+      "studentName": "marry",
+      "arrivals": [
+        {
+          "day": "Monday",
+          "time": "08:00"
+        },
+        {
+          "day": "Wednesday",
+          "time": "12:45"
         }
       ]
     }

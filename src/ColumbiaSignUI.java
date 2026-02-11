@@ -45,6 +45,7 @@ public class ColumbiaSignUI extends JFrame {
     private static final String STUDENTS_JSON_FILE = "studentData.json";
     private static final String SLIDES_JSON_FILE   = "slidesData.json";
     private static final String CONFIG_JSON_FILE   = "configData.json";
+    private static final String IMAGE_FOLDER = "slide-images";
 
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -288,7 +289,13 @@ public class ColumbiaSignUI extends JFrame {
     private JComboBox<String> cboPlaybackSpeed;
     private JLabel lblStatus;
     private JTextArea txtResults;
-
+    /* ===============================
+       REAL-TIME PLAYBACK STATE
+       =============================== */
+    private javax.swing.Timer playbackTimer;
+    private List<SampleProcessor.PlaybackEvent> playbackEvents;
+    private int playbackEventIndex = 0;
+    private double playbackSpeedMultiplier = 1.0;
     /* ===============================
        IDs
        =============================== */
@@ -780,19 +787,45 @@ public class ColumbiaSignUI extends JFrame {
 
         // Slides
         btnBrowseSlideImage.addActionListener(e -> {
+
             JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Select a slide image (optional)");
-            chooser.setFileFilter(new FileNameExtensionFilter("Images (*.jpg, *.jpeg, *.png)", "jpg", "jpeg", "png"));
+            chooser.setDialogTitle("Select a slide image");
+            chooser.setFileFilter(new FileNameExtensionFilter(
+                    "Images (*.jpg, *.jpeg, *.png)", "jpg", "jpeg", "png"));
 
             int result = chooser.showOpenDialog(this);
             if (result != JFileChooser.APPROVE_OPTION) return;
 
-            File f = chooser.getSelectedFile();
-            if (f == null || !f.exists()) return;
+            File selected = chooser.getSelectedFile();
+            if (selected == null || !selected.exists()) return;
 
-            txtSlideImagePath.setText(f.getAbsolutePath());
-            showImagePreview(f);
+            try {
+                File imageDir = new File(IMAGE_FOLDER);
+                if (!imageDir.exists()) imageDir.mkdirs();
+
+                File dest = new File(imageDir, selected.getName());
+
+                java.nio.file.Files.copy(
+                        selected.toPath(),
+                        dest.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+
+                // Store RELATIVE path, not absolute
+                txtSlideImagePath.setText(dest.getPath());
+
+                showImagePreview(dest);
+
+                lblStatus.setText("Image copied to " + IMAGE_FOLDER + "/");
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Failed to copy image.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         });
+
 
         btnAddSlide.addActionListener(e -> {
             String name = safeTrim(txtSlideName.getText());
@@ -1087,15 +1120,83 @@ public class ColumbiaSignUI extends JFrame {
         // Simulation controls (UI-only)
         btnRunSimulation.addActionListener(e -> {
 
-            lblStatus.setText("Running simulation...");
-            txtResults.setText(
-                    "Simulation running...\n" +
-                            "See console output.\n"
-            );
+            SampleProcessor processor = new SampleProcessor();
+            SampleProcessor.SimulationResult result =
+                    processor.runFullSimulation();
 
-            // 🔥 THIS IS THE ONLY LINE THAT MATTERS
-            new SampleProcessor().run();
+            txtResults.setText("");
+
+            if (rbFast.isSelected()) {
+
+                // Show playback slice logs
+                for (var event : result.playbackEvents) {
+
+                    txtResults.append(
+                            "Week " + event.weekNumber + " " +
+                                    event.day + " " +
+                                    event.arrivalTime.format(
+                                            java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
+                                    " — " +
+                                    event.studentName +
+                                    " saw \"" +
+                                    event.slideName +
+                                    "\" for " +
+                                    event.secondsToDisplay +
+                                    "s\n"
+                    );
+                }
+
+                // Show completion summary
+                txtResults.append("\n=== SUMMARY BY STUDENT (FULL ONLY) ===\n");
+
+                java.util.Map<String, java.util.List<String>> summary =
+                        new java.util.LinkedHashMap<>();
+
+                for (var r : result.completionReport) {
+
+                    if (!r.fullySeen) continue;
+
+                    String key = "Week " + r.weekNumber + " — " + r.studentName;
+
+                    summary.computeIfAbsent(key,
+                                    k -> new java.util.ArrayList<>())
+                            .add(r.slideName);
+                }
+
+                for (String key : summary.keySet()) {
+
+                    java.util.List<String> slides = summary.get(key);
+
+                    txtResults.append(
+                            key + " fully saw: " +
+                                    String.join(", ", slides) + "\n"
+                    );
+                }
+
+                lblStatus.setText("Analytical simulation complete.");
+            }
+            else {
+
+                // Get selected playback speed
+                String speed = (String) cboPlaybackSpeed.getSelectedItem();
+                if (speed != null && speed.endsWith("x")) {
+                    playbackSpeedMultiplier =
+                            Double.parseDouble(speed.replace("x", ""));
+                } else {
+                    playbackSpeedMultiplier = 1.0;
+                }
+
+                playbackEvents = result.playbackEvents;
+                playbackEventIndex = 0;
+
+                btnRunSimulation.setEnabled(false);
+                btnStopRealtime.setEnabled(true);
+
+                startRealtimePlayback();
+            }
+
         });
+
 
         btnStopRealtime.addActionListener(e -> stopRealtime());
 
@@ -1367,12 +1468,135 @@ public class ColumbiaSignUI extends JFrame {
 
         return out;
     }
+/* ===============================
+   REAL-TIME PLAYBACK ENGINE
+   =============================== */
 
-    /* ===============================
-       Real-time playback (not implemented)
-       =============================== */
+    private void startRealtimePlayback() {
+        playNextEvent();
+    }
+
+    private void playNextEvent() {
+
+        if (playbackEventIndex >= playbackEvents.size()) {
+
+            stopRealtime();
+
+            txtResults.append("\n=== SUMMARY BY STUDENT (FULL ONLY) ===\n");
+
+            SampleProcessor processor = new SampleProcessor();
+            var report = processor.generateCompletionReport(playbackEvents);
+
+            java.util.Map<String, java.util.List<String>> summary =
+                    new java.util.LinkedHashMap<>();
+
+            for (var r : report) {
+
+                if (!r.fullySeen) continue;
+
+                String key = "Week " + r.weekNumber + " — " + r.studentName;
+
+                summary.computeIfAbsent(key,
+                                k -> new java.util.ArrayList<>())
+                        .add(r.slideName);
+            }
+
+            for (String key : summary.keySet()) {
+
+                var slides = summary.get(key);
+
+                txtResults.append(
+                        key + " fully saw: " +
+                                String.join(", ", slides) + "\n"
+                );
+            }
+
+            lblStatus.setText("Playback complete.");
+            return;
+        }
+
+
+
+
+        SampleProcessor.PlaybackEvent event =
+                playbackEvents.get(playbackEventIndex);
+
+        lblStatus.setText(
+                "Week " + event.weekNumber + " " +
+                        event.day + " " +
+                        event.arrivalTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
+                        " — " +
+                        event.studentName +
+                        " seeing \"" +
+                        event.slideName +
+                        "\" (" +
+                        event.secondsToDisplay +
+                        "s)"
+        );
+
+        txtResults.append(
+                "Week " + event.weekNumber + " " +
+                        event.day + " " +
+                        event.arrivalTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
+                        " — " +
+                        event.studentName +
+                        " saw \"" +
+                        event.slideName +
+                        "\" for " +
+                        event.secondsToDisplay +
+                        "s\n"
+        );
+
+        showSlideById(event.slideId, event.slideName);
+
+        int delayMs =
+                (int) ((event.secondsToDisplay * 1000) / playbackSpeedMultiplier);
+
+        playbackTimer = new javax.swing.Timer(delayMs, e -> {
+            playbackEventIndex++;
+            playNextEvent();
+        });
+
+        playbackTimer.setRepeats(false);
+        playbackTimer.start();
+    }
+
+    private void showSlideById(int slideId, String fallbackName) {
+
+        for (SlideDef s : slideTableModel.getSlides()) {
+
+            if (s.getSlideId() == slideId) {
+
+                if (s.getImagePath() != null) {
+                    File f = new File(s.getImagePath());
+                    if (f.exists()) {
+                        showImagePreview(f);
+                        return;
+                    }
+                }
+
+                originalPreviewImage = null;
+                lblPreview.setIcon(null);
+                lblPreview.setText(s.getSlideName());
+                return;
+            }
+        }
+
+        originalPreviewImage = null;
+        lblPreview.setIcon(null);
+        lblPreview.setText(fallbackName);
+    }
+
     private void stopRealtime() {
-        // placeholder for later
+
+        if (playbackTimer != null) {
+            playbackTimer.stop();
+        }
+
+        btnRunSimulation.setEnabled(true);
+        btnStopRealtime.setEnabled(false);
+
+        lblStatus.setText("Playback stopped.");
     }
 
     public static void main(String[] args) {

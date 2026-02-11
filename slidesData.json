@@ -1,37 +1,33 @@
 {
-  "generatedAt": "2026-02-10T02:00:26.289194871",
+  "generatedAt": "2026-02-10T15:52:24.799816552",
   "slides": [
     {
-      "slideId": 3,
+      "slideId": 11,
       "slideOrder": 1,
       "slideName": "slide1",
-      "durationSeconds": 20,
-      "imagePath": "/home/shawng/Pictures/clandestin4.png"
+      "durationSeconds": 10,
+      "imagePath": "slide-images/clandestin4.png"
     },
     {
-      "slideId": 2,
+      "slideId": 12,
       "slideOrder": 2,
       "slideName": "slide2",
-      "durationSeconds": 20,
-      "imagePath": "/home/shawng/Pictures/clandestine/Photos-1-001/IMG_20251005_155607875_HDR.jpg"
+      "durationSeconds": 10,
+      "imagePath": "slide-images/emily.jpg"
     },
     {
-      "slideId": 4,
+      "slideId": 13,
       "slideOrder": 3,
       "slideName": "slide3",
-      "durationSeconds": 10
+      "durationSeconds": 10,
+      "imagePath": "slide-images/couldnt-find-a-sitter.jpg"
     },
     {
-      "slideId": 5,
+      "slideId": 14,
       "slideOrder": 4,
       "slideName": "slide4",
-      "durationSeconds": 10
-    },
-    {
-      "slideId": 6,
-      "slideOrder": 5,
-      "slideName": "slide5",
-      "durationSeconds": 10
+      "durationSeconds": 10,
+      "imagePath": "slide-images/2b4ab976-5aa4-40a5-9a38-51bc0fd406bc.jpg"
     }
   ]
 }
