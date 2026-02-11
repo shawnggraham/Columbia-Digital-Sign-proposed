@@ -1,9 +1,25 @@
 {
-  "generatedAt": "2026-02-10T19:47:50.963818314",
+  "generatedAt": "2026-02-10T20:16:02.913888658",
   "slides": [
     {
-      "slideId": 11,
+      "slideId": 15,
       "slideOrder": 1,
+      "slideName": "Clandestine",
+      "durationSeconds": 10,
+      "imagePath": "slide-images/IMG_20251020_105249357_HDR.jpg",
+      "rotationDegrees": 90
+    },
+    {
+      "slideId": 14,
+      "slideOrder": 2,
+      "slideName": "slide4",
+      "durationSeconds": 10,
+      "imagePath": "slide-images/2b4ab976-5aa4-40a5-9a38-51bc0fd406bc.jpg",
+      "rotationDegrees": 90
+    },
+    {
+      "slideId": 11,
+      "slideOrder": 3,
       "slideName": "slide1",
       "durationSeconds": 10,
       "imagePath": "slide-images/clandestin4.png",
@@ -11,27 +27,11 @@
     },
     {
       "slideId": 12,
-      "slideOrder": 2,
+      "slideOrder": 4,
       "slideName": "slide2",
       "durationSeconds": 10,
       "imagePath": "slide-images/emily.jpg",
       "rotationDegrees": 0
-    },
-    {
-      "slideId": 13,
-      "slideOrder": 3,
-      "slideName": "slide3",
-      "durationSeconds": 10,
-      "imagePath": "slide-images/couldnt-find-a-sitter.jpg",
-      "rotationDegrees": 0
-    },
-    {
-      "slideId": 14,
-      "slideOrder": 4,
-      "slideName": "slide4",
-      "durationSeconds": 10,
-      "imagePath": "slide-images/2b4ab976-5aa4-40a5-9a38-51bc0fd406bc.jpg",
-      "rotationDegrees": 90
     }
   ]
 }

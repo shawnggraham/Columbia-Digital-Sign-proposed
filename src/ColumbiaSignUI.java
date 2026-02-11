@@ -17,31 +17,29 @@ import java.util.List;
 
 /*
 =============================================================
-Columbia Sign UI (Swing) — UI-only, JSON-save hooks
+Columbia Sign UI (Swing) — Just the interface here, folks, saving stuff to JSON like it’s going out of style.
 
-Key behavior:
-- Students have multiple arrivals (day + time) in-memory
-- Selecting a student shows only their arrivals
-- "Write Student Information to JSON" sends ALL students + arrivals
-  to StudentSample.handleStudents(...) (writes studentData.json)
-- "Save Slides JSON" sends slides to SampleSlides.handleSlides(...) (writes slidesData.json)
-- "Save Config JSON" sends config to SampleConfig.handleConfig(...) (writes configData.json)
-- On startup, UI auto-loads:
-    - studentData.json
-    - slidesData.json
-    - configData.json
+We’ve got students showing up on different days and times—select one, and bam, you only see their arrivals.
 
-NEW:
-- Simulation Start Time dropdown in Config panel (15-minute intervals, HH:mm)
-- Saved/loaded via configData.json
+Hit "Write Student Information to JSON" and all those kiddos and their times get dumped into studentData.json.
+
+Same deal for slides and config. Hit those buttons, and we’re writing to slidesData.json and configData.json.
+
+On startup, this thing is smart enough to load those JSON files automatically.
+
+And check this out, we now have a dropdown to pick when the simulation kicks off—every 15 minutes, on the dot.
 =============================================================
 */
 
 public class ColumbiaSignUI extends JFrame {
-
     /* ===============================
-       BLOCK 0 — Auto-load filenames + Gson
-       =============================== */
+BLOCK 0 — Files we’re dealing with and our JSON magic
+We got three files we care about:
+Students live in "studentData.json"
+Slides hang out in "slidesData.json"
+Config settings are in "configData.json"
+And we use Gson to pretty-print everything nicely when we write stuff out.
+ ======================================================================== */
     private static final String STUDENTS_JSON_FILE = "studentData.json";
     private static final String SLIDES_JSON_FILE   = "slidesData.json";
     private static final String CONFIG_JSON_FILE   = "configData.json";
@@ -80,8 +78,12 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       Data Contracts
-       =============================== */
+        Data Contracts — Here’s what we’re storing
+        Slides (SlideDef) hold IDs, orders, names, duration, image paths, and rotation angles.
+        Students (StudentDef) have IDs, names, and a bunch of arrival times.
+        Arrivals (ArrivalDef) are just day and time—simple as that.
+        No nonsense, just what we need to keep the show running.
+      =============================== */
 
     public static class SlideDef {
         private int slideId;
@@ -125,7 +127,9 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       STUDENTS + ARRIVALS MODELS
+        Students and arrivals are simple. We’ve got a student with an ID, name, and a list of
+        when they show up. Each arrival is just a day and time.
+        Nothing fancy, just what’s needed to track them.
        =============================== */
 
     public static class ArrivalDef {
@@ -219,8 +223,9 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       JSON Save Hooks (no IO here)
-       =============================== */
+        The JSON save hooks are just callbacks. We tell it what to do when we save config, students, or slides.
+        No file writing here, just making sure we can hand off the data when needed.
+    =============================== */
     public interface ConfigSaveHandler { void onSaveConfig(SignConfig config); }
     public interface StudentsSaveHandler { void onSaveStudents(List<StudentDef> students); }
     public interface SlidesSaveHandler { void onSaveSlides(List<SlideDef> slides); }
@@ -638,7 +643,7 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       RIGHT: Config + Preview + Results
+       Rightsidepannel: configuration + Preview + resultz
        =============================== */
     private JPanel buildRightPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -793,14 +798,14 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       Wiring
+       Do some wire rangling here
        =============================== */
     private void wireEvents() {
 
         // Slides
         btnBrowseSlideImage.addActionListener(e -> {
 
-            JFileChooser chooser = new JFileChooser();
+            JFileChooser chooser = new JFileChooser(new File(IMAGE_FOLDER));
             chooser.setDialogTitle("Select a slide image");
             chooser.setFileFilter(new FileNameExtensionFilter(
                     "Images (*.jpg, *.jpeg, *.png)", "jpg", "jpeg", "png"));
@@ -1333,8 +1338,11 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       BLOCK D — Load Config JSON
-       Applies only the controls that exist in this UI.
+       BLOCK D — Load the configs in JSON
+        only the settings that have corresponding inputs in the user interface—like
+        spinners or dropdowns—are applied. If there are extra fields in the JSON
+        that aren’t represented visually in the UI, those are ignored. basicall only
+        sets what the user can actually see and adjust.
        =============================== */
     private boolean loadConfigFromJson(File f) {
         try (FileReader r = new FileReader(f)) {
@@ -1366,7 +1374,7 @@ public class ColumbiaSignUI extends JFrame {
     }
 
     /* ===============================
-       Preview helpers
+       Preview helpers These help out with like image rotation, etc.
        =============================== */
     private void showImagePreview(File imgFile) {
         ImageIcon icon = new ImageIcon(imgFile.getAbsolutePath());
@@ -1439,7 +1447,7 @@ public class ColumbiaSignUI extends JFrame {
         return out;
     }
 /* ===============================
-   REAL-TIME PLAYBACK ENGINE
+   Realtime  Playback with speed selector...pretty cool
    =============================== */
 
     private void startRealtimePlayback() {

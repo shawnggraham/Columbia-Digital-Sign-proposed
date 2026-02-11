@@ -8,21 +8,28 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * SampleProcessor
- *
- * Clean Simulation Engine
- * - Loads JSON state
- * - Runs simulation
- * - Builds playback events
- * - Builds completion report
- * - Returns formatted report string for UI
- */
+/*
+=============================================================
+SampleProcessor
+
+This is the simulation engine.
+UI feeds it JSON. It loads everything, runs the math,
+builds playback events, builds the completion report,
+and hands a formatted string back to the UI.
+
+No Swing junk in here. Just logic.
+=============================================================
+*/
+
 public class SampleProcessor {
 
     /* ===============================
-       JSON FILES
-       =============================== */
+       JSON FILE LOCATIONS
+
+       These are the three files we depend on.
+       If one is missing, simulation doesn't run.
+    =============================== */
+
     private static final String CONFIG_JSON_FILE   = "configData.json";
     private static final String SLIDES_JSON_FILE   = "slidesData.json";
     private static final String STUDENTS_JSON_FILE = "studentData.json";
@@ -30,6 +37,12 @@ public class SampleProcessor {
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("HH:mm");
 
+    /*
+       Day name → numeric index
+       Used for sorting and calculating offsets.
+       If someone fat-fingers a day name,
+       it'll default to the bottom.
+    */
     private static final Map<String, Integer> DAY_INDEX = Map.of(
             "Monday", 0,
             "Tuesday", 1,
@@ -42,8 +55,11 @@ public class SampleProcessor {
     private final Random rng = new Random();
 
     /* ===============================
-       JSON MODELS
-       =============================== */
+       JSON STRUCTURE MODELS
+
+       These match the exact structure of the JSON files.
+       Nothing fancy — just data containers.
+    =============================== */
 
     private static class ConfigFile {
         String simulationStartTime;
@@ -64,8 +80,12 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       RUNTIME MODELS
-       =============================== */
+       MAIN SIMULATION ENTRY
+
+       This runs the full engine and returns
+       both playback events and the completion report.
+    =============================== */
+
     public SimulationResult runFullSimulation() {
 
         ConfigFile config = loadConfig();
@@ -87,6 +107,12 @@ public class SampleProcessor {
 
         return new SimulationResult(events, report);
     }
+
+    /* ===============================
+       PLAYBACK EVENT MODEL
+
+       One student seeing one slide for X seconds.
+    =============================== */
 
     public static class PlaybackEvent {
         public int weekNumber;
@@ -115,6 +141,13 @@ public class SampleProcessor {
         }
     }
 
+    /* ===============================
+       COMPLETION RECORD
+
+       Did the student see the full slide?
+       That's all we care about here.
+    =============================== */
+
     public static class SlideCompletionRecord {
         public int weekNumber;
         public String studentName;
@@ -132,6 +165,15 @@ public class SampleProcessor {
             this.fullySeen = fullySeen;
         }
     }
+
+    /* ===============================
+       WRAPPED SIMULATION RESULT
+
+       Holds:
+       - playback events
+       - completion report
+    =============================== */
+
     public static class SimulationResult {
         public List<PlaybackEvent> playbackEvents;
         public List<SlideCompletionRecord> completionReport;
@@ -145,7 +187,10 @@ public class SampleProcessor {
 
     /* ===============================
        PUBLIC ENTRY FOR UI
-       =============================== */
+
+       UI calls this when it just wants
+       a formatted text report.
+    =============================== */
 
     public String runAndReturnReport() {
 
@@ -167,7 +212,10 @@ public class SampleProcessor {
 
     /* ===============================
        PLAYBACK GENERATION
-       =============================== */
+
+       This builds every event:
+       week → student → visibility window → slide segments
+    =============================== */
 
     private List<PlaybackEvent> generatePlaybackEvents(
             ConfigFile config,
@@ -209,15 +257,17 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       COMPLETION REPORT
-       =============================== */
+       COMPLETION LOGIC
+
+       Adds up how many seconds a student saw each slide.
+       If total >= slide duration → FULL.
+    =============================== */
 
     private List<SlideCompletionRecord> generateCompletionReport(
             List<PlaybackEvent> events,
             List<ColumbiaSignUI.SlideDef> slides) {
 
         List<SlideCompletionRecord> report = new ArrayList<>();
-
         Map<String, Integer> accumulation = new HashMap<>();
 
         Map<String, Integer> slideDurations =
@@ -260,7 +310,9 @@ public class SampleProcessor {
 
     /* ===============================
        REPORT FORMATTER
-       =============================== */
+
+       Builds a clean text block for UI display.
+    =============================== */
 
     private String formatReport(List<PlaybackEvent> events,
                                 List<SlideCompletionRecord> report) {
@@ -303,8 +355,11 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       STUDENT ARRIVAL MODEL
-       =============================== */
+       INTERNAL STUDENT ARRIVAL MODEL
+
+       Flattened version of student + arrival.
+       Makes simulation simpler to process.
+    =============================== */
 
     private static class StudentArrival {
         String studentName;
@@ -320,7 +375,11 @@ public class SampleProcessor {
 
     /* ===============================
        JSON LOADERS
-       =============================== */
+
+       These read the files and convert them
+       into runtime models.
+       If something breaks, we return null.
+    =============================== */
 
     private List<StudentArrival> loadStudents() {
 
@@ -335,6 +394,7 @@ public class SampleProcessor {
                     LocalTime base =
                             LocalTime.parse(a.getTime(), TIME_FMT);
 
+                    // Randomize arrival ±5 minutes
                     LocalTime randomized =
                             base.plusMinutes(rng.nextInt(11) - 5);
 
@@ -389,8 +449,12 @@ public class SampleProcessor {
     }
 
     /* ===============================
-       CORE PLAYBACK COMPUTATION
-       =============================== */
+       CORE PLAYBACK MATH
+
+       This is where the real timing math happens.
+       Calculates where in the slide cycle the student lands,
+       then splits visibility across slides as needed.
+    =============================== */
 
     private List<PlaybackEvent> computePlaybackForStudent(
             LocalTime simStart,
