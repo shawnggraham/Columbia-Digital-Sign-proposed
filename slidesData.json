@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-11T12:01:45.994057137",
+  "generatedAt": "2026-02-11T19:59:35.996753496",
   "slides": [
     {
       "slideId": 27,
@@ -31,7 +31,7 @@
       "slideName": "Rocinante",
       "durationSeconds": 30,
       "imagePath": "slide-images/rocinante2.jpg",
-      "rotationDegrees": 0
+      "rotationDegrees": 90
     }
   ]
 }
